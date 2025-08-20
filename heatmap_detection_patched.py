@@ -1,21 +1,24 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-map_qubit_v2_unified — version alignée sur le nouveau pipeline U_t_2D_computing
+map_detection_v2_unified — version alignée sur le nouveau pipeline U_t_2D_computing
 Objectifs :
-- Un seul dossier **données** par configuration (qubit)
+- Un seul dossier **données** par configuration (détecteur/qubit droit)
 - Les **images** sont enregistrées dans un sous-dossier dont le nom contient
   la résolution demandée (TARGET_NU x TARGET_NT), la configuration (ex: singlet_triplet)
-  et le mot **qubit**
+  et le mot **detector**
 - Si les données existent déjà pour cette configuration **et** ce nombre de points,
   le programme fait un **replot-only** (aucun recalcul)
 - Écriture **incrémentale** par Δt (memmap .npy) → reprise sûre et RAM minimale
-- ETA global léger (benchmark partiel d’une seule ligne ΔU)
-- Affichage pratiques : résumé des ΔU, barre tqdm extérieure (lignes ΔU) + intérieure (Δt)
+- ETA global **sans bench** (ETA online pendant le vrai calcul)
+- Affichages pratiques : résumé des ΔU, barre tqdm extérieure (lignes ΔU) + intérieure (Δt)
 """
 
+# --- IMPORTANT : définir ces variables d'environnement AVANT tout import scientifique ---
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 import gc
 import time
 import math
@@ -26,8 +29,7 @@ from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
 from numpy.lib.format import open_memmap  # memmap pour écriture incrémentale
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
+
 from qutip import sesolve, Options, Qobj
 from qutip_utils import (
     hbar_eVs, all_occupations, 
@@ -47,20 +49,23 @@ from param_simu import (delta_U_vals_full, delta_t_vals_full,
                         nbr_pts, basis_occ, logical_qubits, nbr_pts, psi0_label, st_L, st_R,
                         num_sites, psi0)
 
-ROW_BASENAME = "fidelity_detector_R_row"  # visible pour row_path() dans les workers
-FORCE_RECALC = False  # défaut (sera surchargé si besoin dans __main__)
+# =================== Réglages spécifiques "detector/qubit droit" ===================
+ROW_BASENAME        = "fidelity_detector_row"  # visible pour row_path() dans les workers
+FORCE_RECALC        = False
 USE_PARALLEL        = True
 MAX_WORKERS         = max(1, (os.cpu_count() or 2) - 1)
-ESTIMATE_RUNTIME    = False
-BENCH_FRAC_DT       = 0.10
-BENCH_MIN_SAMPLES   = 20
-UPSAMPLE_TO_HIGHRES = False
-FORCE_RECALC        = False
+print("coeur : ", MAX_WORKERS)
 
+# Plus de bench séquentiel → ETA en ligne
+ESTIMATE_RUNTIME    = False  # bench legacy désactivé
+UPSAMPLE_TO_HIGHRES = False
+
+# Affichage ETA online (faible overhead)
+SHOW_ETA            = True
+UPDATE_EVERY_S      = 1.0    # throttle des mises à jour ETA
 
 # --- Globals visibles dans les sous-processus ---
 SE_OPTS = {"rtol": 1e-6, "atol": 1e-8, "nsteps": 10000}  # défaut safe pour qubits_impulsion_lastonly
-
 
 # ========================= Utilitaires ===========================
 def _slug(s: str) -> str:
@@ -77,6 +82,20 @@ def phase_relative(a, b):
     if (np.abs(a) < 1e-15 and np.abs(b) < 1e-15):
         return 0.0
     return wrap_pi(np.angle(a) - np.angle(b))
+
+class OnlineETA:
+    """Moyenne exponentielle pour estimer un temps moyen par tâche (rangée ΔU)."""
+    def __init__(self, alpha=0.4):
+        self.alpha = float(alpha)
+        self.mean = None
+        self.n = 0
+    def update(self, x: float) -> float:
+        self.n += 1
+        if self.mean is None:
+            self.mean = float(x)
+        else:
+            self.mean = self.alpha*float(x) + (1.0 - self.alpha)*self.mean
+        return self.mean
 
 # --- QUBIT DROIT UNIQUEMENT ---
 def extract_qubit_R(final_state, logical_qubits):
@@ -98,48 +117,33 @@ def right_qubit_metrics(final_state, logical_qubits, eps=1e-12, normalize=True):
     - weight: p = <ψ|P_R|ψ>, poids dans le sous-espace logique du qubit droit
     - a, b: amplitudes <S_R|ψ>, <T0_R|ψ>
     """
-    # États logiques du qubit droit (Qobj kets dans l’espace complet)
     qR = logical_qubits[1]
     S_R = qR["0"]
     T_R = qR["1"]
 
-    # Amplitudes dans la base {|S>,|T0>} du qubit droit
     a = complex(S_R.overlap(final_state))   # <S_R|ψ>
     b = complex(T_R.overlap(final_state))   # <T_R|ψ>
 
-    # Matrice densité projetée non normalisée: P|ψ><ψ|P restreinte à {S,T0}
     rho_unn = np.array([[a*np.conjugate(a), a*np.conjugate(b)],
                         [b*np.conjugate(a), b*np.conjugate(b)]], dtype=np.complex128)
 
-    # Poids dans le sous-espace du qubit droit
     weight = float((rho_unn[0,0] + rho_unn[1,1]).real)
 
-    # Normalisation (pour une matrice densité de trace = 1 sur ce sous-espace)
     if normalize and weight > eps:
         rho = rho_unn / weight
     else:
         rho = rho_unn
 
-    # Cohérence et pureté
     if normalize:
-        coherence = float(np.abs(rho[0,1]))                 # ∈ [0,1]
-        purity    = float(np.trace(rho @ rho).real)         # ∈ [0,1]
+        coherence = float(np.abs(rho[0,1]))
+        purity    = float(np.trace(rho @ rho).real)
     else:
-        # version "indépendante du poids": normalise l'off-diagonal par √(ρ_SS ρ_TT)
         denom = np.sqrt(max(rho[0,0].real,0.0)*max(rho[1,1].real,0.0)) + eps
         coherence = float(np.abs(rho[0,1]) / denom) if denom > eps else 0.0
         tr = float((rho[0,0] + rho[1,1]).real)
         purity = float(np.trace(rho @ rho).real / (tr*tr + eps))
 
-    return {
-        "rho": rho,                # 2x2 complex
-        "coherence": coherence,    # [0,1]
-        "purity": purity,          # [0,1]
-        "weight": weight,          # [0,1] si pas de fuite
-        "a": a, "b": b
-    }
-
-
+    return {"rho": rho, "coherence": coherence, "purity": purity, "weight": weight, "a": a, "b": b}
 
 # ETA utils
 def _fmt_time(seconds: float) -> str:
@@ -153,7 +157,7 @@ def _smooth_window(t, t0, t1, tau):
     return 0.5*(_np.tanh((t - t0)/tau) - _np.tanh((t - t1)/tau))
 
 def _f_pulse(t, args):
-    tau = args.get("tau", (args["t1"] - args["t0"]) / 6)#20.0) # changed
+    tau = args.get("tau", (args["t1"] - args["t0"]) / 6)  # conservé de ta version
     return _smooth_window(t, args["t0"], args["t1"], tau)
 
 def _f_base(t, args):
@@ -186,8 +190,8 @@ def qubits_impulsion_lastonly(num_sites, n_electrons,
         store_final_state=True,
         progress_bar=None,
         rtol=min(_get_opt(SE_OPTS, "rtol", 1e-6), 5e-5),
-        atol=min(_get_opt(SE_OPTS, "atol", 1e-8), 1e-7), # changed
-        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000),
+        atol=min(_get_opt(SE_OPTS, "atol", 1e-8), 1e-7),  # conservé
+        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
         method="bdf"
     )
 
@@ -230,11 +234,9 @@ def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
     )
 
     if float(delta_U_meV) == 0.0:
-        # Aligner avec U_t_2D_computing : snapshot juste avant l’impulsion
         idx_not_imp = max(0, imp_start_idx - 1)
         V_x = pot_xt[idx_not_imp]
     else:
-        # Pendant l’impulsion : moyenne robuste (inchangé)
         dt_sim  = T_final / len(time_array)
         steps   = max(1, int(np.ceil(delta_t / dt_sim)))
         imp_end = min(len(time_array), imp_start_idx + steps)
@@ -256,9 +258,9 @@ def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
 
     return T_eV, U_eV
 
-# =================== Baseline φ0(Δt) ===================
+# =================== Baseline φ0 (ΔU=0) — version rapide ===================
 def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
-                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+                                  imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
         try:
             data = np.load(BASELINE_FILE)
@@ -269,7 +271,6 @@ def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
         print("⚠️ Baseline incompatible avec la grille actuelle. Recalcul…")
 
     print("🧭 Calcul baseline φ0 (ΔU=0) — version rapide…")
-    # 1 seul calcul suffit
     T_eV, U_eV = compute_txU_for_pulse(delta_t=float(delta_t_vals[0]), delta_U_meV=0.0, imp_start_idx=imp_start_idx)
     H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
     final_state = qubits_impulsion_lastonly(
@@ -278,13 +279,15 @@ def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
         t_imp=t_imp, Delta_t=float(delta_t_vals[0]), T_final=T_final,
         psi0_full=psi0_full, nbr_pts=nbr_pts
     )
-    a0, b0 = extract_qubit_L(final_state, logical_qubits)
+    # ⚠️ qubit droit
+    a0, b0 = extract_qubit_R(final_state, logical_qubits)
     phi0_val = phase_relative(a0, b0)
     phi0 = np.full(len(delta_t_vals), phi0_val, dtype=np.float64)
 
     np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
     return phi0
 
+# (version boucle complète, conservée si besoin de comparer)
 def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
                              imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
@@ -310,14 +313,12 @@ def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
         a0, b0 = extract_qubit_R(final_state, logical_qubits)
-
         phi0[j] = phase_relative(a0, b0)
 
     np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
     return phi0
 
 # =================== Lignes fidelity ===================
-
 def row_path(base_dir: str, i: int) -> str:
     return os.path.join(base_dir, f"{ROW_BASENAME}_{i:03d}.npy")
 
@@ -326,6 +327,7 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
     """Écrit **incrémentalement** la ligne i (ΔU_i) dans un memmap .npy, valeur par valeur (Δt_j)."""
     t_line0 = time.perf_counter()
     out_file = row_path(base_dir, i)
+    print(f"[pid {os.getpid()}] start row ΔU={delta_U_meV:.3f} meV")
 
     # Ouvre/crée memmap
     if (not FORCE_RECALC) and os.path.exists(out_file):
@@ -358,17 +360,13 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
         )
         aR, bR = extract_qubit_R(final_state, logical_qubits)
         dphi = wrap_pi(phase_relative(aR, bR) - phi0[j])
-        fidelity_row_mm[j] = float(np.cos(0.5 * dphi)**2)
         prob = float(np.cos(0.5 * dphi)**2)
-        metrics = right_qubit_metrics(final_state, logical_qubits, normalize=True)
-    # coh   = metrics["coherence"]   # |rho_ST|
-    # pur   = metrics["purity"]      # Tr rho^2
-    # wght  = metrics["weight"]      # masse dans le sous-espace (fuites si <<1)
+        fidelity_row_mm[j] = prob
 
-    # # Exemple 1: map de cohérence (graduée 0..1)
-    # fidelity_row_mm[j] = float(coh)
+        # Optionnel : autres métriques si besoin
+        _ = right_qubit_metrics(final_state, logical_qubits, normalize=True)
+
         print(f"ΔU={delta_U_meV:.2f} meV Δt={delta_t*1e9:.3f} ns  |a|={abs(aR):.3f} |b|={abs(bR):.3f}  dφ={dphi:.3f} rad  p={prob:.3f}")
-
 
         if (j + 1) % 50 == 0:
             fidelity_row_mm.flush()
@@ -379,14 +377,14 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
     print(f"  ↳ ligne ΔU={delta_U_meV:.3f} meV faite en {_fmt_time(time.perf_counter() - t_line0)}")
     return out_file
 
+# (ancien bench conservé mais inutilisé)
 def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
-    nsamp = max(BENCH_MIN_SAMPLES, int(math.ceil(BENCH_FRAC_DT * len(delta_t_vals))))
-    idxs  = np.linspace(0, len(delta_t_vals)-1, nsamp, dtype=int)
+    nsamp = max(1, int(math.ceil(0.1 * len(delta_t_vals))))
+    idxs  = np.linspace(0, len(delta_t_vals)-1, max(1, nsamp), dtype=int)
     dt_s  = delta_t_vals[idxs]
-
     start = time.perf_counter()
-    for j, delta_t in enumerate(tqdm(dt_s, desc=f"⏱️ Bench ΔU={delta_U_meV:.3f} meV", leave=False, unit="Δt")):
+    for j, delta_t in enumerate(dt_s):
         T_eV, U_eV = compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
         final_state = qubits_impulsion_lastonly(
@@ -395,10 +393,10 @@ def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        aL, bL = extract_qubit_R(final_state, logical_qubits)
-        _ = np.cos(0.5 * wrap_pi(phase_relative(aL, bL) - phi0[idxs[j]]))**2
+        aR, bR = extract_qubit_R(final_state, logical_qubits)
+        _ = np.cos(0.5 * wrap_pi(phase_relative(aR, bR) - phi0[idxs[j]]))**2
     elapsed = time.perf_counter() - start
-    return elapsed * (len(delta_t_vals) / len(dt_s))
+    return elapsed * (len(delta_t_vals) / max(1, len(dt_s)))
 
 def _summarize_grid(vals, name="ΔU", unit="meV", max_items=10):
     vals = np.asarray(vals, dtype=float)
@@ -412,23 +410,11 @@ def _summarize_grid(vals, name="ΔU", unit="meV", max_items=10):
     print(f"{name} grid ({unit}) [{n}]: {s}")
 
 def build_fidelity_detector_rows(delta_U_vals, delta_t_vals, phi0, base_dir,
-                          imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
-    print("🧪 Scan probas de non-changement de phase (cos²(Δφ/2))…")
+                                 imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    print("🧪 Scan probas de non-changement de phase (cos²(Δφ/2)) — DÉTECTEUR (qubit droit)…")
     _summarize_grid(delta_U_vals, name="ΔU", unit="meV")
 
-    # ETA global
-    if ESTIMATE_RUNTIME:
-        try:
-            mid_idx  = len(delta_U_vals)//2
-            probe_du = float(delta_U_vals[mid_idx])
-            est_line = _estimate_per_line_time(probe_du, delta_t_vals, phi0,
-                                               imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-            n_lines  = sum(1 for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path(base_dir, i))))
-            if n_lines:
-                batches = math.ceil(n_lines / (MAX_WORKERS if (USE_PARALLEL and MAX_WORKERS>1) else 1))
-                print(f"⏳ ETA totale ~{_fmt_time(batches*est_line)}  (~{_fmt_time(est_line)}/ligne, {n_lines} lignes)")
-        except Exception as e:
-            print(f"⚠️ ETA indisponible ({e}).")
+    # Pas d'ETA par bench : tout est online ci-dessous
 
     todo = [i for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path(base_dir, i)))]
     if not todo:
@@ -436,28 +422,62 @@ def build_fidelity_detector_rows(delta_U_vals, delta_t_vals, phi0, base_dir,
         return
 
     if USE_PARALLEL and len(todo) > 1:
+        print(f"🧵 Démarrage du calcul parallèle des rangées ΔU (max_workers={MAX_WORKERS})")
         from concurrent.futures import ProcessPoolExecutor, as_completed
-        future_to_idx = {}
+
+        eta_rows = OnlineETA(alpha=0.4)
+        submit_t = {}  # i -> t_start
+        done = 0
+        total = len(todo)
+        eff_workers = max(1, min(MAX_WORKERS, total))
+        next_update = time.perf_counter() + UPDATE_EVERY_S
+
         with ProcessPoolExecutor(max_workers=MAX_WORKERS) as ex, \
-             tqdm(total=len(todo), desc="ΔU rows (parallel)", unit="row") as pbar:
+             tqdm(total=total, desc="ΔU rows (parallel)", unit="row") as pbar:
+            future_to_idx = {}
             for i in todo:
-                future = ex.submit(_compute_row_for_deltaU, i, float(delta_U_vals[i]), delta_t_vals, phi0, base_dir,
-                                   imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-                future_to_idx[future] = i
+                submit_t[i] = time.perf_counter()
+                fut = ex.submit(_compute_row_for_deltaU, i, float(delta_U_vals[i]), delta_t_vals, phi0, base_dir,
+                                imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+                future_to_idx[fut] = i
+
             for fut in as_completed(future_to_idx):
                 i = future_to_idx[fut]
-                du = float(delta_U_vals[i])
-                pbar.set_postfix_str(f"done ΔU={du:.3f} meV")
-                pbar.update(1)
+                try:
+                    _ = fut.result()
+                except Exception as e:
+                    print(f"⚠️ Rangée ΔU index {i} échouée : {e}")
+                finally:
+                    dur = time.perf_counter() - submit_t.get(i, time.perf_counter())
+                    avg = eta_rows.update(dur)
+                    done += 1
+                    left = total - done
+                    eta_sec = (left / eff_workers) * (avg if eta_rows.n > 0 else 0.0)
+
+                    if SHOW_ETA:
+                        now = time.perf_counter()
+                        if (now >= next_update) or (done == total):
+                            du = float(delta_U_vals[i])
+                            pbar.set_postfix_str(f"avg={avg:.1f}s ETA~{_fmt_time(eta_sec)} (ΔU={du:.3f} meV)")
+                            next_update = now + UPDATE_EVERY_S
+                    pbar.update(1)
     else:
-        # Séquentiel : barre de progression extérieure avec ΔU affiché
+        # Séquentiel : barre de progression extérieure avec ETA online léger
         with tqdm(total=len(todo), desc="ΔU (meV)", unit="ΔU") as pbar:
-            for i in todo:
+            eta_seq = OnlineETA(alpha=0.35)
+            for k, i in enumerate(todo, start=1):
+                t0 = time.perf_counter()
                 du = float(delta_U_vals[i])
                 pbar.set_postfix_str(f"ΔU={du:.3f}")
                 _compute_row_for_deltaU(i, du, delta_t_vals, phi0, base_dir,
                                         imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
                 gc.collect()
+                dur = time.perf_counter() - t0
+                avg = eta_seq.update(dur)
+                left = len(todo) - k
+                if SHOW_ETA and left > 0:
+                    eta_rem = left * avg
+                    pbar.set_postfix_str(f"ΔU={du:.3f} avg={avg:.1f}s ETA~{_fmt_time(eta_rem)}")
                 pbar.update(1)
 
 # =================== Reconstruction / plotting ===================
@@ -573,12 +593,12 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
     if (not FORCE_RECALC) and data_complete_for_grid(nU, nT):
         print("📦 Données déjà présentes pour cette configuration et cette grille. Replot uniquement.")
         fidelity_map_coarse = load_fidelity_detector_map(delta_U_vals, delta_t_vals, data_dir)
-        print("fidelity_map_coarse coarse Nb NaN :", np.isnan(fidelity_map_coarse).sum(), " / ", fidelity_map_coarse.size)
+        print("fidelity_map_coarse Nb NaN :", np.isnan(fidelity_map_coarse).sum(), " / ", fidelity_map_coarse.size)
 
         if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != nU) or (len(delta_t_vals_full) != nT)):
             print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
             fidelity_map_full = interpolate_to_full(fidelity_map_coarse, delta_U_vals, delta_t_vals,
-                                             delta_U_vals_full, delta_t_vals_full)
+                                                    delta_U_vals_full, delta_t_vals_full)
             np.save(os.path.join(data_dir, f"fidelity_detector_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"), fidelity_map_full)
             plot_fidelity_detector_map(fidelity_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
         else:
@@ -586,30 +606,18 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
         print("✅ Replot terminé (aucun recalcul).")
         raise SystemExit(0)
 
-    # 1) baseline φ0(Δt)
+    # 1) baseline φ0 (ΔU=0)
     t_step0 = time.perf_counter()
     phi0 = compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
-                                    idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+                                         idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
 
-    # 2) ETA globale (optionnelle)
-    if ESTIMATE_RUNTIME:
-        try:
-            mid_idx    = len(delta_U_vals)//2
-            est_line   = _estimate_per_line_time(float(delta_U_vals[mid_idx]), delta_t_vals, phi0,
-                                                 idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-            n_lines_todo = sum(1 for i in range(len(delta_U_vals))
-                               if (FORCE_RECALC or not os.path.exists(row_path(data_dir, i))))
-            if n_lines_todo:
-                batches = math.ceil(n_lines_todo / max(1, (MAX_WORKERS if USE_PARALLEL else 1)))
-                print(f"⏳ ETA totale ~{_fmt_time(batches*est_line)}  (~{_fmt_time(est_line)}/ligne, {n_lines_todo} lignes)")
-        except Exception as e:
-            print(f"ETA indisponible ({e}).")
+    # 2) (ETA globale par bench désactivée)
 
     # 3) calcul des lignes ΔU (écriture incrémentale par Δt) + barres tqdm ΔU
     t_step1 = time.perf_counter()
     build_fidelity_detector_rows(delta_U_vals, delta_t_vals, phi0, data_dir,
-                          idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+                                 idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Lignes ΔU calculées en {_fmt_time(time.perf_counter() - t_step1)}")
 
     # 4) reconstruction et upsampling éventuel
@@ -620,7 +628,7 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
     if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != len(delta_U_vals)) or (len(delta_t_vals_full) != len(delta_t_vals))):
         print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
         fidelity_map_full = interpolate_to_full(fidelity_map_coarse, delta_U_vals, delta_t_vals,
-                                         delta_U_vals_full, delta_t_vals_full)
+                                                delta_U_vals_full, delta_t_vals_full)
         np.save(os.path.join(data_dir, f"fidelity_detector_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"),
                 fidelity_map_full)
         print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
@@ -630,12 +638,11 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
         plot_fidelity_detector_map(fidelity_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
     print(f"⏱️ Reconstruction + plot en {_fmt_time(time.perf_counter() - t_step2)}")
 
-
-
-
-
 # =============================== MAIN ===============================
 if __name__ == "__main__":
+    import multiprocessing as mp
+    mp.freeze_support()  # Windows safety
+
     _, _, psi0_full = _prepare_initial_state_qubits(num_sites, n_electrons, psi0, basis_occ, logical_qubits)
 
     # === Construit un H_base cohérent ===
@@ -650,4 +657,3 @@ if __name__ == "__main__":
     print("U_not_pul : ", U_base)
 
     main_detector(delta_U_vals_full, delta_t_vals_full)
-

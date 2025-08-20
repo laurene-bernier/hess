@@ -55,8 +55,7 @@ from param_simu import (
 ROW_BASENAME        = "p_nochange_row"   # fichiers p_nochange_row_###.npy
 FORCE_RECALC        = False
 USE_PARALLEL        = True
-MAX_WORKERS         = max(1, (os.cpu_count() or 2)-1)
-print("coeur : ", MAX_WORKERS)
+MAX_WORKERS         = max(1, (os.cpu_count() or 2) - 1)
 
 # Bench historique coupé → ETA en ligne
 ESTIMATE_RUNTIME    = False  # ne plus utiliser de bench mono-cœur
@@ -156,7 +155,7 @@ def qubits_impulsion_lastonly(num_sites, n_electrons,
         progress_bar=None,
         rtol=min(_get_opt(SE_OPTS, "rtol", 1e-6), 5e-5),
         atol=min(_get_opt(SE_OPTS, "atol", 1e-8), 1e-7),
-        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000),
+        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
         method="bdf"
     )
 
