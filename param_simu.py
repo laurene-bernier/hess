@@ -84,8 +84,8 @@ y  = np.linspace(-5*sigma_y, 5*sigma_y, Ny)
 
 # Default timing used by *examples* (your map code defines its own time grid)
 t_imp   = 0.1e-9
-Delta_t = 0.3e-9
-T_final = 0.8e-9
+Delta_t = 0.4e-9
+T_final = 1.0e-9
 delta_U_meV = 60 # 35-60 max
 
 nbr_pts = 300
@@ -105,6 +105,7 @@ logical_qubits = _build_logical_qubits(num_sites, basis_occ)
 psi0_label = "singlet-triplet"       # change1 tu a plus le tchat ? ok x)je vais essayer de simuler pour ètre sur
 #psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]
 init_sig = [st_L["S"], st_R["T0"]] # change1 et normalement cest bon si mais bon 
+psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]   
 
 coarse_nu = 50
 coarse_nt = 50
@@ -114,7 +115,7 @@ TARGET_NT = 5
 
 # bornes ΔU (meV) et Δt (s)
 delta_U_vals_full = np.linspace(55, 60.0, TARGET_NU) #   change1 la ces bon je pence
-delta_t_vals_full = np.linspace(0.4e-9, 0.4e-9, TARGET_NT) #  T_final - t_imp
+delta_t_vals_full = np.linspace(0.4e-9, T_final - t_imp, TARGET_NT) #  
 
 
 

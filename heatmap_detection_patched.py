@@ -33,19 +33,19 @@ from qutip_utils import (
     hbar_eVs, all_occupations, 
     _prepare_initial_state_qubits, build_spinful_hubbard_hamiltonian
 )
-from analysis_qutip import num_sites, psi0
 from U_t_2D_computing import (
     pulse_U, potential_over_time,
     get_eigs, localize_with_fallback,
     t_from_orbitals, U_vector_from_orbitals
 )
 import scipy.constants as sc
-from param_simu import (init_sig, delta_U_vals_full, delta_t_vals_full, 
+from param_simu import (delta_U_vals_full, delta_t_vals_full, 
                         n_electrons, t_imp, T_final, barrier_heights_meV, 
                         well_depths_meV, well_width_nm, barrier_widths_nm, 
                         a_meV_nm2, dot_x, sigma_x, sigma_y,
                         time_array, idx_t_imp, x, y, m_eff,
-                        nbr_pts, basis_occ, logical_qubits, nbr_pts, psi0_label, st_L, st_R)
+                        nbr_pts, basis_occ, logical_qubits, nbr_pts, psi0_label, st_L, st_R,
+                        num_sites, psi0)
 
 ROW_BASENAME = "fidelity_detector_R_row"  # visible pour row_path() dans les workers
 FORCE_RECALC = False  # défaut (sera surchargé si besoin dans __main__)
@@ -505,13 +505,13 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
 
     # ====================== Chemins et organisation ======================
     config_tag = _slug(psi0_label) if isinstance(psi0_label, str) and psi0_label else "config"
-    INIT_SIG   = state_signature(init_sig)
 
     RESULTS_ROOT = "detector_results"
-    data_dir  = os.path.join(RESULTS_ROOT, f"{config_tag}__psi0_{INIT_SIG}")
+    RES_TAG = f"{len(delta_U_vals_full)}x{len(delta_t_vals_full)}"
+
+    data_dir  = os.path.join(RESULTS_ROOT, f"{config_tag}__psi0_{RES_TAG}")
     os.makedirs(data_dir, exist_ok=True)
 
-    RES_TAG = f"{len(delta_U_vals_full)}x{len(delta_t_vals_full)}"
     image_dir = os.path.join(data_dir, "images", f"{RES_TAG}__{config_tag}__detector")
     os.makedirs(image_dir, exist_ok=True)
 

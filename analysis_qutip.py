@@ -21,7 +21,7 @@ from qutip_utils import (
 import U_t_2D_computing as computing
 from param_simu import(delta_U_meV, t_imp, Delta_t, T_final, 
                        num_sites, n_electrons, st_L, st_R, psi0_label,
-                       spin_pair, cases)
+                       spin_pair, cases, psi0)
 
 t_matrix_not_pulse = None
 t_matrix_pulse     = None
@@ -64,12 +64,10 @@ print("============= 2 qubits (4 sites)  —  impulsion =============")
 
 
 # Exemple d’utilisation :
-left, right = cases[psi0_label]
-psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]   
+#left, right = cases[psi0_label]
 
 #psi0 = [spin_pair(st_L, left), -spin_pair(st_R, right)]
-print("left : ", left)
-print("right : ", right)
+print("psi0 : ", psi0_label)
 
 # psi0_label = "singlet-triplet"             
 # Exemple : |ψ_k⟩ = a_k |S_k⟩ + b_k |T0_k⟩ (tu peux remplacer par random_st_qubit_state si tu veux)
