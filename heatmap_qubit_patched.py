@@ -55,7 +55,7 @@ from param_simu import (
 ROW_BASENAME        = "p_nochange_row"   # fichiers p_nochange_row_###.npy
 FORCE_RECALC        = False
 USE_PARALLEL        = True
-MAX_WORKERS         = max(1, (os.cpu_count() or 2))
+MAX_WORKERS         = max(1, (os.cpu_count() or 2)-1)
 print("coeur : ", MAX_WORKERS)
 
 # Bench historique coupé → ETA en ligne
@@ -513,12 +513,12 @@ def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
 
     # ====================== Chemins et organisation ======================
     config_tag = _slug(psi0_label) if isinstance(psi0_label, str) and psi0_label else "config"
-
+    RES_TAG = f"{len(delta_U_vals_full)}x{len(delta_t_vals_full)}"
     RESULTS_ROOT = "qubit_results"
-    data_dir  = os.path.join(RESULTS_ROOT, f"{config_tag}__psi0_{psi0_label}")
+    data_dir  = os.path.join(RESULTS_ROOT, f"{config_tag}__psi0_{RES_TAG}")
     os.makedirs(data_dir, exist_ok=True)
 
-    RES_TAG = f"{len(delta_U_vals_full)}x{len(delta_t_vals_full)}"
+    
     image_dir = os.path.join(data_dir, "images", f"{RES_TAG}__{config_tag}__qubit")
     os.makedirs(image_dir, exist_ok=True)
 

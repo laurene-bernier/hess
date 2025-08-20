@@ -51,7 +51,7 @@ ROW_BASENAME = "fidelity_detector_R_row"  # visible pour row_path() dans les wor
 FORCE_RECALC = False  # défaut (sera surchargé si besoin dans __main__)
 USE_PARALLEL        = True
 MAX_WORKERS         = max(1, (os.cpu_count() or 2) - 1)
-ESTIMATE_RUNTIME    = True
+ESTIMATE_RUNTIME    = False
 BENCH_FRAC_DT       = 0.10
 BENCH_MIN_SAMPLES   = 20
 UPSAMPLE_TO_HIGHRES = False
@@ -257,6 +257,34 @@ def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
     return T_eV, U_eV
 
 # =================== Baseline φ0(Δt) ===================
+def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
+                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
+        try:
+            data = np.load(BASELINE_FILE)
+            if np.array_equal(data.get("delta_t_vals"), delta_t_vals):
+                return data["phi0"]
+        except Exception:
+            pass
+        print("⚠️ Baseline incompatible avec la grille actuelle. Recalcul…")
+
+    print("🧭 Calcul baseline φ0 (ΔU=0) — version rapide…")
+    # 1 seul calcul suffit
+    T_eV, U_eV = compute_txU_for_pulse(delta_t=float(delta_t_vals[0]), delta_U_meV=0.0, imp_start_idx=imp_start_idx)
+    H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+    final_state = qubits_impulsion_lastonly(
+        num_sites=num_sites, n_electrons=n_electrons,
+        H_base=H_base, H_pulse=H_pulse,
+        t_imp=t_imp, Delta_t=float(delta_t_vals[0]), T_final=T_final,
+        psi0_full=psi0_full, nbr_pts=nbr_pts
+    )
+    a0, b0 = extract_qubit_L(final_state, logical_qubits)
+    phi0_val = phase_relative(a0, b0)
+    phi0 = np.full(len(delta_t_vals), phi0_val, dtype=np.float64)
+
+    np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
+    return phi0
+
 def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
                              imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
@@ -560,7 +588,7 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
 
     # 1) baseline φ0(Δt)
     t_step0 = time.perf_counter()
-    phi0 = compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
+    phi0 = compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
                                     idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
 
