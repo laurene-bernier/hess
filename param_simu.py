@@ -110,8 +110,8 @@ psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]
 coarse_nu = 50
 coarse_nt = 50
 
-TARGET_NU = 5
-TARGET_NT = 5
+TARGET_NU = 10
+TARGET_NT = 10
 
 # bornes ΔU (meV) et Δt (s)
 delta_U_vals_full = np.linspace(55, 60.0, TARGET_NU) #   change1 la ces bon je pence

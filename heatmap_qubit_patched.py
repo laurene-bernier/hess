@@ -12,11 +12,15 @@ Objectifs :
 - Si les données existent déjà pour cette configuration **et** ce nombre de points,
   le programme fait un **replot-only** (aucun recalcul)
 - Écriture **incrémentale** par Δt (memmap .npy) → reprise sûre et RAM minimale
-- ETA global léger (benchmark partiel d’une seule ligne ΔU)
+- ETA global léger **sans bench** (ETA online pendant le vrai calcul)
 - Affichages pratiques : résumé des ΔU, barre tqdm extérieure (lignes ΔU) + intérieure (Δt)
 """
 
+# --- IMPORTANT : placer ces variables d'environnement AVANT tout import scientifique ---
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 import gc
 import time
 import math
@@ -27,8 +31,6 @@ from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
 from numpy.lib.format import open_memmap  # memmap pour écriture incrémentale
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
 
 from qutip import sesolve, Options, Qobj
 from qutip_utils import (
@@ -55,10 +57,14 @@ FORCE_RECALC        = False
 USE_PARALLEL        = True
 MAX_WORKERS         = max(1, (os.cpu_count() or 2))
 print("coeur : ", MAX_WORKERS)
-ESTIMATE_RUNTIME    = True
-BENCH_FRAC_DT       = 0.10
-BENCH_MIN_SAMPLES   = 20
+
+# Bench historique coupé → ETA en ligne
+ESTIMATE_RUNTIME    = False  # ne plus utiliser de bench mono-cœur
 UPSAMPLE_TO_HIGHRES = False
+
+# Affichage ETA online (faible overhead)
+SHOW_ETA            = True
+UPDATE_EVERY_S      = 1.0    # throttle des mises à jour ETA
 
 # --- Globals visibles dans les sous-processus ---
 SE_OPTS = {"rtol": 1e-6, "atol": 1e-8 }#, "nsteps": 10000}  # défaut safe
@@ -78,6 +84,20 @@ def phase_relative(a, b):
     if (np.abs(a) < 1e-15 and np.abs(b) < 1e-15):
         return 0.0
     return wrap_pi(np.angle(a) - np.angle(b))
+
+class OnlineETA:
+    """Moyenne exponentielle pour estimer un temps moyen par tâche."""
+    def __init__(self, alpha=0.4):
+        self.alpha = float(alpha)
+        self.mean = None
+        self.n = 0
+    def update(self, x: float) -> float:
+        self.n += 1
+        if self.mean is None:
+            self.mean = float(x)
+        else:
+            self.mean = self.alpha*float(x) + (1.0 - self.alpha)*self.mean
+        return self.mean
 
 # --- QUBIT GAUCHE UNIQUEMENT ---
 def extract_qubit_L(final_state, logical_qubits):
@@ -203,7 +223,37 @@ def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
 
     return T_eV, U_eV
 
+
 # =================== Baseline φ0(Δt) ===================
+def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
+                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
+        try:
+            data = np.load(BASELINE_FILE)
+            if np.array_equal(data.get("delta_t_vals"), delta_t_vals):
+                return data["phi0"]
+        except Exception:
+            pass
+        print("⚠️ Baseline incompatible avec la grille actuelle. Recalcul…")
+
+    print("🧭 Calcul baseline φ0 (ΔU=0) — version rapide…")
+    # 1 seul calcul suffit
+    T_eV, U_eV = compute_txU_for_pulse(delta_t=float(delta_t_vals[0]), delta_U_meV=0.0, imp_start_idx=imp_start_idx)
+    H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+    final_state = qubits_impulsion_lastonly(
+        num_sites=num_sites, n_electrons=n_electrons,
+        H_base=H_base, H_pulse=H_pulse,
+        t_imp=t_imp, Delta_t=float(delta_t_vals[0]), T_final=T_final,
+        psi0_full=psi0_full, nbr_pts=nbr_pts
+    )
+    a0, b0 = extract_qubit_L(final_state, logical_qubits)
+    phi0_val = phase_relative(a0, b0)
+    phi0 = np.full(len(delta_t_vals), phi0_val, dtype=np.float64)
+
+    np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
+    return phi0
+
+
 def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
                              imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE):
@@ -243,6 +293,7 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
     """Écrit **incrémentalement** la ligne i (ΔU_i) dans un memmap .npy, valeur par valeur (Δt_j)."""
     t_line0 = time.perf_counter()
     out_file = row_path(base_dir, i)
+    print(f"[pid {os.getpid()}] start row ΔU={delta_U_meV:.3f} meV")
 
     # Ouvre/crée memmap
     if (not FORCE_RECALC) and os.path.exists(out_file):
@@ -286,14 +337,14 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
     print(f"  ↳ ligne ΔU={delta_U_meV:.3f} meV faite en {_fmt_time(time.perf_counter() - t_line0)}")
     return out_file
 
+# (conservée mais inutilisée puisque ESTIMATE_RUNTIME=False)
 def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
-    nsamp = max(BENCH_MIN_SAMPLES, int(math.ceil(BENCH_FRAC_DT * len(delta_t_vals))))
-    idxs  = np.linspace(0, len(delta_t_vals)-1, nsamp, dtype=int)
+    nsamp = max(1, int(math.ceil(0.1 * len(delta_t_vals))))
+    idxs  = np.linspace(0, len(delta_t_vals)-1, max(1, nsamp), dtype=int)
     dt_s  = delta_t_vals[idxs]
-
     start = time.perf_counter()
-    for j, delta_t in enumerate(tqdm(dt_s, desc=f"⏱️ Bench ΔU={delta_U_meV:.3f} meV", leave=False, unit="Δt")):
+    for j, delta_t in enumerate(dt_s):
         T_eV, U_eV = compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
         final_state = qubits_impulsion_lastonly(
@@ -305,7 +356,7 @@ def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
         aL, bL = extract_qubit_L(final_state, logical_qubits)
         _ = np.cos(0.5 * wrap_pi(phase_relative(aL, bL) - phi0[idxs[j]]))**2
     elapsed = time.perf_counter() - start
-    return elapsed * (len(delta_t_vals) / len(dt_s))
+    return elapsed * (len(delta_t_vals) / max(1, len(dt_s)))
 
 def _summarize_grid(vals, name="ΔU", unit="meV", max_items=10):
     vals = np.asarray(vals, dtype=float)
@@ -323,19 +374,7 @@ def build_p_nochange_rows(delta_U_vals, delta_t_vals, phi0, base_dir,
     print("🧪 Scan probas de non-changement de phase (cos²(Δφ/2)) — QUBIT GAUCHE…")
     _summarize_grid(delta_U_vals, name="ΔU", unit="meV")
 
-    # ETA global
-    if ESTIMATE_RUNTIME:
-        try:
-            mid_idx  = len(delta_U_vals)//2
-            probe_du = float(delta_U_vals[mid_idx])
-            est_line = _estimate_per_line_time(probe_du, delta_t_vals, phi0,
-                                               imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-            n_lines  = sum(1 for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path(base_dir, i))))
-            if n_lines:
-                batches = math.ceil(n_lines / (MAX_WORKERS if (USE_PARALLEL and MAX_WORKERS>1) else 1))
-                print(f"⏳ ETA totale ~{_fmt_time(batches*est_line)}  (~{_fmt_time(est_line)}/ligne, {n_lines} lignes)")
-        except Exception as e:
-            print(f"⚠️ ETA indisponible ({e}).")
+    # On ne calcule pas d'ETA par bench : tout est online ci-dessous
 
     todo = [i for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path(base_dir, i)))]
     if not todo:
@@ -343,27 +382,62 @@ def build_p_nochange_rows(delta_U_vals, delta_t_vals, phi0, base_dir,
         return
 
     if USE_PARALLEL and len(todo) > 1:
+        print(f"🧵 Démarrage du calcul parallèle des rangées ΔU (max_workers={MAX_WORKERS})")
         from concurrent.futures import ProcessPoolExecutor, as_completed
-        future_to_idx = {}
+
+        eta_rows = OnlineETA(alpha=0.4)
+        submit_t = {}  # i -> t_start
+        done = 0
+        total = len(todo)
+        eff_workers = max(1, min(MAX_WORKERS, total))
+        next_update = time.perf_counter() + UPDATE_EVERY_S
+
         with ProcessPoolExecutor(max_workers=MAX_WORKERS) as ex, \
-             tqdm(total=len(todo), desc="ΔU rows (parallel)", unit="row") as pbar:
+             tqdm(total=total, desc="ΔU rows (parallel)", unit="row") as pbar:
+            future_to_idx = {}
             for i in todo:
-                future = ex.submit(_compute_row_for_deltaU, i, float(delta_U_vals[i]), delta_t_vals, phi0, base_dir,
-                                   imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-                future_to_idx[future] = i
+                submit_t[i] = time.perf_counter()
+                fut = ex.submit(_compute_row_for_deltaU, i, float(delta_U_vals[i]), delta_t_vals, phi0, base_dir,
+                                imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+                future_to_idx[fut] = i
+
             for fut in as_completed(future_to_idx):
                 i = future_to_idx[fut]
-                du = float(delta_U_vals[i])
-                pbar.set_postfix_str(f"done ΔU={du:.3f} meV")
-                pbar.update(1)
+                try:
+                    _ = fut.result()
+                except Exception as e:
+                    print(f"⚠️ Rangée ΔU index {i} échouée : {e}")
+                finally:
+                    dur = time.perf_counter() - submit_t.get(i, time.perf_counter())
+                    avg = eta_rows.update(dur)
+                    done += 1
+                    left = total - done
+                    eta_sec = (left / eff_workers) * (avg if eta_rows.n > 0 else 0.0)
+
+                    if SHOW_ETA:
+                        now = time.perf_counter()
+                        if (now >= next_update) or (done == total):
+                            du = float(delta_U_vals[i])
+                            pbar.set_postfix_str(f"avg={avg:.1f}s ETA~{_fmt_time(eta_sec)} (ΔU={du:.3f} meV)")
+                            next_update = now + UPDATE_EVERY_S
+                    pbar.update(1)
     else:
         with tqdm(total=len(todo), desc="ΔU (meV)", unit="ΔU") as pbar:
+            # ETA intra-boucle (séquentiel) : optionnel et très léger
+            eta_seq = OnlineETA(alpha=0.35)
             for i in todo:
+                t0 = time.perf_counter()
                 du = float(delta_U_vals[i])
                 pbar.set_postfix_str(f"ΔU={du:.3f}")
                 _compute_row_for_deltaU(i, du, delta_t_vals, phi0, base_dir,
                                         imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
                 gc.collect()
+                dur = time.perf_counter() - t0
+                avg = eta_seq.update(dur)
+                left = len(todo) - (todo.index(i)+1)
+                if SHOW_ETA and left > 0:
+                    eta_rem = left * avg
+                    pbar.set_postfix_str(f"ΔU={du:.3f} avg={avg:.1f}s ETA~{_fmt_time(eta_rem)}")
                 pbar.update(1)
 
 # =================== Reconstruction / plotting ===================
@@ -493,23 +567,11 @@ def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
 
     # 1) baseline φ0(Δt)
     t_step0 = time.perf_counter()
-    phi0 = compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
+    phi0 = compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
                                     idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
 
-    # 2) ETA globale (optionnelle)
-    if ESTIMATE_RUNTIME:
-        try:
-            mid_idx    = len(delta_U_vals)//2
-            est_line   = _estimate_per_line_time(float(delta_U_vals[mid_idx]), delta_t_vals, phi0,
-                                                 idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
-            n_lines_todo = sum(1 for i in range(len(delta_U_vals))
-                               if (FORCE_RECALC or not os.path.exists(row_path(data_dir, i))))
-            if n_lines_todo:
-                batches = math.ceil(n_lines_todo / max(1, (MAX_WORKERS if USE_PARALLEL else 1)))
-                print(f"⏳ ETA totale ~{_fmt_time(batches*est_line)}  (~{_fmt_time(est_line)}/ligne, {n_lines_todo} lignes)")
-        except Exception as e:
-            print(f"ETA indisponible ({e}).")
+    # 2) (ETA globale par bench désactivée)
 
     # 3) calcul des lignes ΔU (écriture incrémentale par Δt) + barres tqdm ΔU
     t_step1 = time.perf_counter()
@@ -537,6 +599,9 @@ def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
 
 # =============================== MAIN ===============================
 if __name__ == "__main__":
+    import multiprocessing as mp
+    mp.freeze_support()  # Windows safety
+
     _, _, psi0_full = _prepare_initial_state_qubits(num_sites, n_electrons, psi0, basis_occ, logical_qubits)
 
     # === Construit un H_base cohérent ===
