@@ -187,7 +187,7 @@ def plot_qubit_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None)
     extent = [T_vals[0]*1e9, T_vals[-1]*1e9, U_vals[0], U_vals[-1]]
     im = plt.imshow(p_map, aspect='auto', origin='lower', extent=extent,
                     cmap='viridis', interpolation='nearest', vmin=0, vmax=1)
-    plt.colorbar(im, label="Probability of having the same phase as the initial state of the Qubit |⟨qL₀(Δt)|qL(ΔU,Δt)⟩|²")
+    plt.colorbar(im, label="Probability of having the same phase as the initial state\n of the Qubit |⟨qL₀(Δt)|qL(ΔU,Δt)⟩|²")
     plt.xlabel("Δt (ns)"); plt.ylabel("ΔU (meV)")
     title = "left Qubit : reference state fidelity"
     if isinstance(psi0_label, str) and psi0_label.strip():
