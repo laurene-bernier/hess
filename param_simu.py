@@ -62,15 +62,15 @@ m_eff = 0.067 * sc.m_e
 sigma_y = 10e-9
 dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
 
-asym_well_depths = 5
-asym_barrier_width = 5
+asym_well_depths = 10
+asym_barrier_width = 10
 asym_barrier_height = 15
 # Global conf for potentials
 a_meV_nm2 = 6.5e-3
 well_depths_meV = (30, 5, 5, 30 + asym_well_depths)
-barrier_heights_meV = (50, 75, 50 + asym_barrier_height)
+barrier_heights_meV = (35, 90, 35 + asym_barrier_height)
 well_width_nm = 23
-barrier_widths_nm = (15, 25, 15 + asym_barrier_width)
+barrier_widths_nm = (15, 30, 15 + asym_barrier_width)
 
 
 
@@ -86,7 +86,7 @@ y  = np.linspace(-5*sigma_y, 5*sigma_y, Ny)
 t_imp   = 0.1e-9
 Delta_t = 0.3e-9
 T_final = 1.0e-9
-delta_U_meV = 53         
+delta_U_meV = 20        
 
 nbr_pts = 300
 
@@ -102,20 +102,21 @@ st_R = _st_states_for_pair(basis_occ, (2,3))
 logical_qubits = _build_logical_qubits(num_sites, basis_occ)
 
 # param heatmap
-psi0_label = "singlet-triplet"       # change1 tu a plus le tchat ? ok x)je vais essayer de simuler pour ètre sur
+psi0_label = "singlet-triplet" #tu a plus le tchat ? ok x)je vais essayer de simuler pour ètre sur
 #psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]
 init_sig = [st_L["S"], st_R["T0"]] # change1 et normalement cest bon si mais bon 
 psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]   
+#si0 = [st_L["S"].unit(), -st_R["T0"].unit()]  
 
 coarse_nu = 50
 coarse_nt = 50
 
-TARGET_NU = 15
-TARGET_NT = 15
+TARGET_NU = 10
+TARGET_NT = 10
 
 # bornes ΔU (meV) et Δt (s)
-delta_U_vals_full = np.linspace(45,55, TARGET_NU)   #  change1 la ces bon je pence
-delta_t_vals_full = np.linspace(0.1e-9, 0.5e-9, TARGET_NT) #  T_final - t_imp
+delta_U_vals_full = np.linspace(35, 60, TARGET_NU) #change1 la ces bon je pence
+delta_t_vals_full = np.linspace(t_imp, T_final - t_imp, TARGET_NT)
 
 
 

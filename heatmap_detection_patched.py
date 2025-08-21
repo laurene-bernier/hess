@@ -264,9 +264,9 @@ def plot_detector_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=No
     extent = [T_vals[0]*1e9, T_vals[-1]*1e9, U_vals[0], U_vals[-1]]
     im = plt.imshow(p_map, aspect='auto', origin='lower', extent=extent,
                     cmap='viridis', interpolation='nearest', vmin=0, vmax=1)
-    plt.colorbar(im, label="Proba qubit droit identique  |⟨qR₀(Δt)|qR(ΔU,Δt)⟩|²")
+    plt.colorbar(im, label="Probability of having the same phase as the initial state of the Qubit |⟨qL₀(Δt)|qL(ΔU,Δt)⟩|²")
     plt.xlabel("Δt (ns)"); plt.ylabel("ΔU (meV)")
-    title = "Détecteur (qubit droit) : probabilité de retrouver l’état de référence"
+    title = "right Detector : reference state fidelity"
     if isinstance(psi0_label, str) and psi0_label.strip():
         title += f"\nConfiguration : {psi0_label}"
     plt.title(title); plt.tight_layout()
@@ -705,7 +705,7 @@ def plot_fidelity_detector_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=N
                     cmap='viridis', interpolation='nearest', vmin=0, vmax=1)
     plt.colorbar(im, label="Proba phase non modifiée  (cos²(Δφ/2))")
     plt.xlabel("Δt (ns)"); plt.ylabel("ΔU (meV)")
-    title = "Détecteur (qubit droit) : probabilité que la phase n'ait pas changé"
+    title = "right Detector : reference state fidelity"
     if isinstance(psi0_label, str) and psi0_label.strip():
         title += f"\nConfiguration : {psi0_label}"
     plt.title(title); plt.tight_layout()
@@ -816,8 +816,8 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
 
     # 3) calcul des lignes ΔU (écriture incrémentale par Δt) + barres tqdm ΔU
     t_step1 = time.perf_counter()
-    build_fidelity_detector_rows(delta_U_vals, delta_t_vals, phi0, data_dir,
-                                 idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+    #build_fidelity_detector_rows(delta_U_vals, delta_t_vals, phi0, data_dir,
+    #                             idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Lignes ΔU calculées en {_fmt_time(time.perf_counter() - t_step1)}")
 
     # 4) reconstruction et upsampling éventuel
