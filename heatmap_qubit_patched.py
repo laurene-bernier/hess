@@ -201,7 +201,7 @@ def plot_qubit_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None)
         out_path = os.path.join(out_dir, fname)
         plt.savefig(out_path, dpi=200, bbox_inches='tight')
         print(f"🖼️ Figure sauvegardée : {out_path}")
-    plt.show()
+    plt.show(block=False)
 
 def compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
                                           imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
@@ -738,7 +738,7 @@ def plot_p_nochange_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None):
         out_path = os.path.join(out_dir, fname)
         plt.savefig(out_path, dpi=200, bbox_inches='tight')
         print(f"🖼️ Figure sauvegardée : {out_path}")
-    plt.show()
+    plt.show(block=False)
 
 def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
     print("🚀 Démarrage map_qubit_left (nouveau pipeline)")
