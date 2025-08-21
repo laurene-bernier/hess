@@ -28,7 +28,6 @@ def build_adaptive_x_grid(dot_x, sigma_x_m, well_width_nm, barrier_widths_nm,
 
 # Helper: construit l'état d'une paire (st = st_L ou st_R)
 def spin_pair(st, psi0_label, triplet_kind="T0"):
-    psi0_label = psi0_label.lower()
     if psi0_label in ("s", "singlet"):     return st["S"].unit()
     if psi0_label in ("t0", "triplet0"):   return st["T0"].unit()
     if psi0_label in ("t+", "uu", "upup"): return st["T+"].unit()   # |↑↑>
