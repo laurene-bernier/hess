@@ -7,6 +7,18 @@ import scipy.constants as sc
 from scipy.constants import hbar, e, epsilon_0, pi
 from scipy.sparse import diags
 from scipy.linalg import eigh   # sert aussi pour les problèmes généralisés
+from param_simu import (
+    Delta_t, T_final, t_imp, delta_U_meV,
+    dot_x, m_eff, a_meV_nm2,
+    well_depths_meV, barrier_heights_meV,
+    well_width_nm, barrier_widths_nm,
+    build_adaptive_x_grid, build_adaptive_y_grid,  # dispo si tu veux régénérer
+    x, y, sigma_x, sigma_y as sigma_y_eff,
+    time_array, idx_t_imp, idx_t_imp_end,
+    y_harmo_meV_nm2, omega_y_from_meVnm2,
+    sigma_y_from_meVnm2, build_y_grid,
+    sigma_y
+)
 
 # =============================================================================
 # Flags de validation
@@ -111,9 +123,6 @@ def potential_over_time(
 # =============================================================================
 # Extension 1D -> 2D + plot 2D
 # =============================================================================
-def build_y_grid(sigma_y_m, span=5.0, Ny=121):
-    """Grille symétrique en y, assez large pour couvrir ±span*sigma_y."""
-    return np.linspace(-span*sigma_y_m, span*sigma_y_m, Ny)
 
 def lift_Vx_to_Vxy_eV(V_x_eV, x_m, y_m,
                       y_harmo_meV_nm2=0.0,
@@ -237,6 +246,70 @@ def plot_potential_3D_wireframe(Vxy_eV, x_m, y_m, title="V(x,y) wireframe",
     plt.tight_layout()
     plt.show()
 
+from scipy.ndimage import minimum_filter1d
+import numpy as np
+from scipy.constants import e
+
+def _split_well_barrier(Vx_eV, x_m, barrier_width_hint_nm=20.0):
+    """Décompose V(x) ~ baseline (fonds de puits) + barrière (pics positifs)."""
+    dx_nm = (x_m[1] - x_m[0]) * 1e9
+    w = max(3, int(round(barrier_width_hint_nm / dx_nm)))  # fenêtre ~ largeur barrière
+    baseline = minimum_filter1d(Vx_eV, size=w, mode="nearest")
+    barrier = np.clip(Vx_eV - baseline, 0.0, None)
+    return baseline, barrier
+
+def lift_Vx_to_Vxy_eV(
+    Vx_eV, x_m, y_m,
+    y_harmo_meV_nm2=0.0,
+    soft_wall_meV=0.0, soft_sigma_nm=20.0, soft_offset_nm=25.0,
+    # --- NOUVEAU : collimation des barrières en y ---
+    barrier_y_sigma_nm=None,            # e.g. 10–20 nm ; None => comportement inchangé
+    barrier_width_hint_nm=20.0,         # indice typique de largeur des barrières en x
+    barrier_envelope_shape="gauss"      # "gauss" | "supergauss4" | "lorentz"
+):
+    X, Y = np.meshgrid(x_m, y_m, indexing='ij')  # Nx, Ny
+    Nx, Ny = len(x_m), len(y_m)
+
+    # 1) Décomposition 1D : baseline + barrière
+    if barrier_y_sigma_nm is not None:
+        baseline_eV, barrier_eV = _split_well_barrier(Vx_eV, x_m, barrier_width_hint_nm)
+    else:
+        baseline_eV, barrier_eV = Vx_eV, 0.0*Vx_eV
+
+    # 2) Enveloppe en y pour la partie "barrière" uniquement (centrée, normée à 1 en y=0)
+    if barrier_y_sigma_nm is not None:
+        s = barrier_y_sigma_nm * 1e-9
+        z = Y / s
+        if barrier_envelope_shape == "gauss":
+            Ey = np.exp(-0.5 * z**2)
+        elif barrier_envelope_shape == "supergauss4":
+            Ey = np.exp(-0.5 * (z**4))
+        elif barrier_envelope_shape == "lorentz":
+            Ey = 1.0 / (1.0 + z**2)
+        else:
+            Ey = np.exp(-0.5 * z**2)  # défaut: gauss
+    else:
+        Ey = 1.0
+
+    # 3) Reconstruit V2D : baseline non modulée + barrière "collimatée" en y
+    V2D_eV = baseline_eV[:, None] + barrier_eV[:, None] * Ey
+
+    # 4) Confinement harmonique en y (optionnel)
+    if y_harmo_meV_nm2 and y_harmo_meV_nm2 > 0.0:
+        k_J_m2 = y_harmo_meV_nm2 * 1e-3 * e * 1e18  # meV/nm^2 -> J/m^2
+        # on laisse l’ajout en joules ici si tu avais déjà le terme sous forme énergétique J
+        # si ta version était en eV directement, convertis puis somme en eV
+        # plus simple : ajoute en eV (cohérent avec le reste)
+        V2D_eV = V2D_eV + (y_harmo_meV_nm2 * (Y*1e9)**2) * 1e-3  # meV -> eV
+
+    # 5) Murs latéraux doux (optionnels)
+    if soft_wall_meV and soft_wall_meV > 0.0:
+        off = soft_offset_nm * 1e-9
+        sig = soft_sigma_nm * 1e-9
+        wall = soft_wall_meV * (0.5*(1 + np.tanh((np.abs(Y)-off)/sig)))
+        V2D_eV = V2D_eV + wall * 1e-3
+
+    return V2D_eV
 
 
 # =============================================================================
@@ -386,51 +459,25 @@ def localize_with_fallback(orbitals, x, dot_x, window_nm=20, thresh=0.85, max_it
 # =============================================================================
 # t et U à partir d’orbitales localisées
 # =============================================================================
-def omega_y_from_meVnm2(a_meV_nm2, m_eff):
-    """
-    V_y = a_meV_nm2 * y_nm^2 (meV)  ≡  0.5 * m_eff * ω_y^2 * y_m^2 (J)
-    => 0.5 m ω^2 = a * 1e-3*e [J/eV] * (1e9)^2 [nm^2->m^2]
-    """
-    if a_meV_nm2 <= 0.0:
-        return 0.0
-    k_J_per_m2 = a_meV_nm2 * 1e-3 * e * 1e18  # J/m^2
-    return np.sqrt(2.0 * k_J_per_m2 / m_eff)
-
-def sigma_y_from_omega(omega_y, m_eff):
-    """Largeur GS HO: σ = sqrt(ħ/(mω))."""
-    if omega_y <= 0.0:
-        return None
-    return np.sqrt(hbar / (m_eff * omega_y))
-
-def sigma_y_from_meVnm2(a_meV_nm2, m_eff):
-    omega = omega_y_from_meVnm2(a_meV_nm2, m_eff)
-    return sigma_y_from_omega(omega, m_eff)
 
 def t_from_orbitals(V_x_eV, x_m, y_m, m_eff,
                     sigma_y_m, orbitals, y_harmo_meV_nm2=0.0):
-    """
-    Construit t_ij en eV avec Hamiltonien 2D :
-      H = - (ħ^2/2m)(∂_xx + ∂_yy) + V_x(x) + V_y(y)
-    V_y(y) = 0.5 m ω_y^2 y^2 (J), avec ω_y dérivé de y_harmo_meV_nm2 si >0.
-    La gaussienne g(y;σ_y) utilise σ_y calculée depuis ω_y si y_harmo>0,
-    sinon σ_y_m fourni.
-    """
     dx = x_m[1] - x_m[0]
     dy = y_m[1] - y_m[0]
     Nx, Ny = len(x_m), len(y_m)
     X, Y = np.meshgrid(x_m, y_m, indexing='ij')
 
-    # --- Potentiel 2D
+    # Potentiel 2D
     V2D_J = (V_x_eV * e)[:, None] * np.ones((Nx, Ny))
+
+    # Si confinement harmonique en y, on l'ajoute AU HAMILTONIEN,
+    # et on impose la même σ_y que celle déduite d'ω_y (cohérence base produit)
     if y_harmo_meV_nm2 and y_harmo_meV_nm2 > 0.0:
         omega_y = omega_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
         V2D_J = V2D_J + 0.5 * m_eff * (omega_y**2) * (Y**2)
-        # σ_y cohérente avec le même confinement
-        sigma_y_calc = sigma_y_from_omega(omega_y, m_eff)
-        if sigma_y_calc is not None:
-            sigma_y_m = sigma_y_calc
+        sigma_y_m = np.sqrt(hbar / (m_eff * omega_y))
 
-    # --- Base produit φ(x)*g(y;σ)
+    # Base produit φ(x)*g(y;σ_y_m)
     g_y = (1.0/(np.pi*sigma_y_m**2))**0.25 * np.exp(-(Y**2)/(2.0*sigma_y_m**2))
 
     T = np.zeros((len(orbitals), len(orbitals)), dtype=float)
@@ -555,24 +602,7 @@ def plot_potential_with_orbitals(dot_x, V_x_eV, x_m, orbitals, title):
 # =============================================================================
 # ===============================  DEFAULTS  ==================================
 # =============================================================================
-m_eff = 0.067 * sc.m_e
-sigma_y = 10e-9
-dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
 
-# Geometry (FWHM)
-well_width_nm = 23
-barrier_widths_nm = (15, 20, 15)
-
-# Global conf for potentials
-a_meV_nm2 = 6.5e-3
-well_depths_meV = (30, 5, 5, 30)
-barrier_heights_meV = (50, 65, 55)
-
-# Default timing used by *examples* (your map code defines its own time grid)
-t_imp   = 0.1e-9
-Delta_t = 1.8e-9
-T_final = 2.0e-9
-delta_U_meV = 40
 
 # ============================ LAZY EXPORTS ===================================
 # Public variables kept for backward compatibility (initially None)
@@ -595,7 +625,7 @@ def _check_t_U_no_touch(t_mat, U_vec, name="(base)"):
         raise ValueError(f"[{name}] U ≤ 0 (no-touch).")
     return t_mat, U_vec
 
-def _compute_if_needed(x=None, y=None, time_array=None,
+def _compute_if_needed_1D(x=None, y=None, time_array=None,
                        t_imp_override=None, Delta_t_override=None,
                        well_depths=None, barrier_heights=None,
                        a_parab_meV_nm2=None, delta_U_meV=None):
@@ -636,15 +666,11 @@ def _compute_if_needed(x=None, y=None, time_array=None,
         strategy="central_only"
     )
 
-    idx_t_imp     = np.searchsorted(time_array, _t_imp)
-    idx_t_imp_end = np.searchsorted(time_array, _t_imp + _Delta_t)
     idx_not_imp   = max(0, idx_t_imp-1)
     idx_during    = min(idx_t_imp + 4, idx_t_imp_end-1)
 
     V_not = pot_xt0[idx_not_imp].copy()
     V_pul = pot_xt0[idx_during].copy()
-
-    
 
     # Eigens + localisation
     _, orbs_not_raw = get_eigs(V_not, x, m_eff, num_states=4)
@@ -667,20 +693,178 @@ def _compute_if_needed(x=None, y=None, time_array=None,
     U_not_vec          = U_not
     U_pul_vec          = U_pul
 
+# dans U_t_2D_computing_test.py
+def _compute_if_needed_2D(x=None, y=None, time_array=None,
+                       t_imp_override=None, Delta_t_override=None,
+                       well_depths=None, barrier_heights=None,
+                       a_parab_meV_nm2=None, delta_U_meV=None,
+                       y_harmo_meV_nm2=y_harmo_meV_nm2,  # ← active confinement en y
+                       Ny_y=121, span_y_sigma=5.0):
+
+    global t_matrix_not_pulse, t_matrix_pulse, U_not_vec, U_pul_vec
+    if all(v is not None for v in (t_matrix_not_pulse, t_matrix_pulse, U_not_vec, U_pul_vec)):
+        return
+
+    _t_imp   = t_imp if t_imp_override is None else t_imp_override
+    _Delta_t = Delta_t if Delta_t_override is None else Delta_t_override
+    _a_meV_nm2 = a_meV_nm2 if a_parab_meV_nm2 is None else a_parab_meV_nm2
+    _well_depths = well_depths_meV if well_depths is None else tuple(well_depths)
+    _barrier_heights = barrier_heights_meV if barrier_heights is None else tuple(barrier_heights)
+
+    if x is None:
+        sigma_x = 15e-9
+        x = build_adaptive_x_grid(dot_x, sigma_x, well_width_nm, barrier_widths_nm,
+                                  safety_pts=16, span_sigma=5)
+
+    # ← cohérence : la grille y est centrée sur ±k·σ_y_eff
+    if y is None:
+        if y_harmo_meV_nm2 and y_harmo_meV_nm2 > 0.0:
+            sigma_y_eff = sigma_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
+        else:
+            sigma_y_eff = sigma_y   # valeur importée de param_simu
+        y = build_y_grid(sigma_y_eff, span=span_y_sigma, Ny=Ny_y)
+    else:
+        sigma_y_eff = (sigma_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
+                    if (y_harmo_meV_nm2 and y_harmo_meV_nm2 > 0.0)
+                    else sigma_y)
+    print(f"y_harmo={y_harmo_meV_nm2} meV/nm^2  |  sigma_y_eff={sigma_y_eff*1e9:.2f} nm  |  y∈[{y[0]*1e9:.1f},{y[-1]*1e9:.1f}] nm")
+
+
+    if time_array is None:
+        time_array = np.linspace(0.0, T_final, 200)
+
+    U_imp0 = pulse_U(time_array, t_start=_t_imp, delta_t=_Delta_t, delta_U_eV=delta_U_meV*1e-3)
+    pot_xt0 = potential_over_time(_a_meV_nm2, U_imp0, x, dot_x,
+                                  well_depths_meV=_well_depths,
+                                  well_width_nm=well_width_nm,
+                                  barrier_heights_meV=_barrier_heights,
+                                  barrier_widths_nm=barrier_widths_nm,
+                                  strategy="central_only")
+
+    idx_t_imp     = np.searchsorted(time_array, _t_imp)
+    idx_t_imp_end = np.searchsorted(time_array, _t_imp + _Delta_t)
+    idx_not_imp   = max(0, idx_t_imp-1)
+    idx_during    = min(idx_t_imp + 4, idx_t_imp_end-1)
+
+    V_not = pot_xt0[idx_not_imp].copy()
+    V_pul = pot_xt0[idx_during].copy()
+
+    # États propres 1D + localisation robuste
+    _, orbs_not_raw = get_eigs(V_not, x, m_eff, num_states=4)
+    _, orbs_pul_raw = get_eigs(V_pul, x, m_eff, num_states=4)
+    orbs_not = localize_with_fallback(orbs_not_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4)
+    orbs_pul = localize_with_fallback(orbs_pul_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4)
+
+    # t en 2D avec le même confinement en y
+    t_matrix_not = t_from_orbitals(V_not, x, y, m_eff, sigma_y_eff, orbs_not,
+                                   y_harmo_meV_nm2=y_harmo_meV_nm2)
+    t_matrix_pul = t_from_orbitals(V_pul, x, y, m_eff, sigma_y_eff, orbs_pul,
+                                   y_harmo_meV_nm2=y_harmo_meV_nm2)
+
+    # U “propre” en 2D (Coulomb soft, chunked)
+    U_not = U_vector_from_orbitals(orbs_not, x, y, sigma_y_eff,
+                                   epsilon_r=11.7, a_soft=8e-9)
+    U_pul = U_vector_from_orbitals(orbs_pul, x, y, sigma_y_eff,
+                                   epsilon_r=11.7, a_soft=8e-9)
+
+    # Validation stricte (pas de clip)
+    t_matrix_not, U_not = _check_t_U_no_touch(t_matrix_not, U_not,  name="base")
+    t_matrix_pul, U_pul = _check_t_U_no_touch(t_matrix_pul, U_pul,  name="pulse")
+
+    t_matrix_not_pulse = t_matrix_not
+    t_matrix_pulse     = t_matrix_pul
+    U_not_vec          = U_not
+    U_pul_vec          = U_pul
+
+def lift_Vx_to_Vxy_eV_test(
+    Vx_eV, x_m, y_m,
+    y_harmo_meV_nm2=0.0,
+    soft_wall_meV=0.0, soft_sigma_nm=20.0, soft_offset_nm=25.0,
+    barrier_y_sigma_nm=None,
+    barrier_width_hint_nm=20.0,
+    barrier_envelope_shape="gauss",
+    barrier_y_hard_cut_k=None,   # existant (k·σ)
+    supergauss_power=4,
+    # --- NOUVEAU : cutoff absolu en |y| ---
+    barrier_y_abs_cut_nm=None
+):
+    X, Y = np.meshgrid(x_m, y_m, indexing='ij')
+
+    # split baseline/barrière
+    if barrier_y_sigma_nm is not None or barrier_y_abs_cut_nm is not None:
+        baseline_eV, barrier_eV = _split_well_barrier(Vx_eV, x_m, barrier_width_hint_nm)
+    else:
+        baseline_eV, barrier_eV = Vx_eV, 0.0*Vx_eV
+
+    # enveloppe en y (optionnelle)
+    if barrier_y_sigma_nm is not None:
+        s = barrier_y_sigma_nm * 1e-9
+        z = np.abs(Y) / s
+        if barrier_envelope_shape == "supergauss4":
+            Ey = np.exp(-0.5 * (z**supergauss_power))
+        elif barrier_envelope_shape == "lorentz":
+            Ey = 1.0 / (1.0 + z**2)
+        else:
+            Ey = np.exp(-0.5 * z**2)
+    else:
+        Ey = 1.0
+
+    # cutoff dur absolu |y|>y_cut
+    if barrier_y_abs_cut_nm is not None:
+        ycut = barrier_y_abs_cut_nm * 1e-9
+        Ey = Ey * (np.abs(Y) <= ycut)
+
+    V2D_eV = baseline_eV[:, None] + barrier_eV[:, None] * Ey
+
+    # harmonique + murs doux (inchangés)
+    if y_harmo_meV_nm2 and y_harmo_meV_nm2 > 0.0:
+        V2D_eV = V2D_eV + (y_harmo_meV_nm2 * (Y*1e9)**2) * 1e-3
+    if soft_wall_meV and soft_wall_meV > 0.0:
+        off = soft_offset_nm * 1e-9
+        sig = soft_sigma_nm * 1e-9
+        wall = soft_wall_meV * (0.5*(1 + np.tanh((np.abs(Y)-off)/sig)))
+        V2D_eV = V2D_eV + wall * 1e-3
+
+    return V2D_eV
+
+def t_from_orbitals_V2D(V2D_eV, x_m, y_m, m_eff, sigma_y_m, orbitals):
+    dx = x_m[1] - x_m[0]
+    dy = y_m[1] - y_m[0]
+    X, Y = np.meshgrid(x_m, y_m, indexing='ij')
+    V2D_J = V2D_eV * e
+
+    # base produit φ(x)*g(y;σy)
+    g_y = (1.0/(np.pi*sigma_y_m**2))**0.25 * np.exp(-(Y**2)/(2.0*sigma_y_m**2))
+
+    n = len(orbitals)
+    T = np.zeros((n, n), dtype=float)
+    for i in range(n-1):
+        phi_i_2D = orbitals[i][:, None]   * g_y
+        phi_j_2D = orbitals[i+1][:, None] * g_y
+
+        # normalisation 2D
+        ni = np.sqrt(np.sum(np.abs(phi_i_2D)**2) * dx * dy)
+        nj = np.sqrt(np.sum(np.abs(phi_j_2D)**2) * dx * dy)
+        if ni > 0: phi_i_2D /= ni
+        if nj > 0: phi_j_2D /= nj
+
+        # H = -ħ²/2m (∂xx+∂yy) + V2D
+        d2x = np.gradient(np.gradient(phi_j_2D, dx, axis=0), dx, axis=0)
+        d2y = np.gradient(np.gradient(phi_j_2D, dy, axis=1), dy, axis=1)
+        Hphi = -(hbar**2/(2*m_eff))*(d2x + d2y) + V2D_J*phi_j_2D
+
+        t_J = -np.sum(np.conj(phi_i_2D) * Hphi) * dx * dy
+        T[i, i+1] = T[i+1, i] = float(np.abs(t_J / e))  # eV
+    return T
+
+
+
 # =============================================================================
 # ===============================  MAIN DEMO  =================================
 # =============================================================================
 if __name__ == "__main__":
-    # Demo grid (example only; other scripts should set their own x,y,time_array)
-    sigma_x = 15e-9
-    x = build_adaptive_x_grid(dot_x, sigma_x, well_width_nm, barrier_widths_nm,
-                              safety_pts=16, span_sigma=5)
-    Ny = 40
-    y = np.linspace(-5*sigma_y, 5*sigma_y, Ny)
 
-    time_array = np.linspace(0.0, T_final, 200)
-    Delta_U_meV = 20
-    U_imp = pulse_U(time_array, t_start=t_imp, delta_t=Delta_t, delta_U_eV=Delta_U_meV*1e-3)
+    U_imp = pulse_U(time_array, t_start=t_imp, delta_t=Delta_t, delta_U_eV=delta_U_meV*1e-3)
 
     pot_xt = potential_over_time(
         a_meV_nm2, U_imp, x, dot_x,
@@ -691,8 +875,6 @@ if __name__ == "__main__":
         strategy="central_only"
     )
 
-    idx_t_imp     = np.searchsorted(time_array, t_imp)
-    idx_t_imp_end = np.searchsorted(time_array, t_imp + Delta_t)
     idx_not_imp   = max(0, idx_t_imp-1)
     idx_during    = min(idx_t_imp + 4, idx_t_imp_end-1)
 
@@ -701,29 +883,38 @@ if __name__ == "__main__":
 
     V_not = add_linear_tilt_eV(V_not, x, tilt_total_meV=0.0)
 
-    print("cordon")
-    # --- Grille y et V(x,y) à l'instant hors/pdt impulsion ---
-    y = build_y_grid(sigma_y, span=5.0, Ny=121)
-
-    V_not_2D = lift_Vx_to_Vxy_eV(
+    V_not_2D = lift_Vx_to_Vxy_eV_test(
         pot_xt[idx_not_imp], x, y,
-        y_harmo_meV_nm2=1e-3,        # mets >0 pour confiner en y (meV/nm^2)
-        soft_wall_meV=0.2,          # petits murs doux en y (meV), 0.0 pour désactiver
-        soft_sigma_nm=20.0,
-        soft_offset_nm=25.0
+        y_harmo_meV_nm2=y_harmo_meV_nm2,
+        soft_wall_meV=0.2, soft_sigma_nm=20.0, soft_offset_nm=25.0,
+        barrier_y_sigma_nm=10.0,
+        barrier_width_hint_nm=25.0,
+        barrier_envelope_shape="supergauss4",
+        barrier_y_hard_cut_k=3,      # <—
+        supergauss_power=4,
+        barrier_y_abs_cut_nm=25.0
     )
-    V_pul_2D = lift_Vx_to_Vxy_eV(pot_xt[idx_during], x, y)
-    print("bleu")
+    V_pul_2D = lift_Vx_to_Vxy_eV_test(
+        pot_xt[idx_during], x, y,
+        y_harmo_meV_nm2=y_harmo_meV_nm2,
+        soft_wall_meV=0.2, soft_sigma_nm=20.0, soft_offset_nm=25.0,
+        barrier_y_sigma_nm=10.0,
+        barrier_width_hint_nm=25.0,
+        barrier_envelope_shape="supergauss4",
+        barrier_y_hard_cut_k=3,
+        supergauss_power=4,
+        barrier_y_abs_cut_nm=25.0
+    )
+
+    print(np.max(np.abs(V_not_2D[:, np.abs(y) > 25e-9] - (lift_Vx_to_Vxy_eV_test(V_not, x,y, barrier_y_abs_cut_nm=25.0)[:, np.abs(y) > 25e-9]))))
+
+
+
     # Eigens + localisation
     _, orbs_not_raw = get_eigs(V_not, x, m_eff, num_states=4)
     _, orbs_pul_raw = get_eigs(V_pul, x, m_eff, num_states=4)
-    orbs_not = localize_with_fallback(orbs_not_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4, Delta_U_meV=Delta_U_meV)
-    orbs_pul = localize_with_fallback(orbs_pul_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4, Delta_U_meV=Delta_U_meV)
-
-    # t and U (demo)
-    # Dans ton main (ou dans _compute_if_needed), juste avant t/U :
-    sigma_y_eff = sigma_y  # fallback par défaut (ton global)
-    y_harmo_meV_nm2 = 1e-3  # <-- utilise la même valeur que dans lift_Vx_to_Vxy_eV
+    orbs_not = localize_with_fallback(orbs_not_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4, Delta_U_meV=delta_U_meV)
+    orbs_pul = localize_with_fallback(orbs_pul_raw, x, dot_x, window_nm=20, thresh=0.80, max_iter=4, Delta_U_meV=delta_U_meV)
 
     if y_harmo_meV_nm2 > 0.0:
         sigma_from_conf = sigma_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
@@ -746,8 +937,19 @@ if __name__ == "__main__":
     print("\n t (with_imp) [eV]:\n", t_matrix_pulse)
     print("\nU_not_imp (eV):", U_not_vec, "  (avg = %.3f meV)" % (1e3*np.mean(U_not_vec)))
     print("U_with_imp (eV):", U_pul_vec, " (avg = %.3f meV)" % (1e3*np.mean(U_pul_vec)))
+    print("Delta_U_meV : ", delta_U_meV)
 
-    print("Delta_U_meV : ", Delta_U_meV)
+    # (si y_harmo_meV_nm2 > 0, garde ce bloc qui recalcule sigma_y_eff cohérent)
+    if y_harmo_meV_nm2 > 0.0:
+        sigma_from_conf = sigma_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
+        if sigma_from_conf is not None:
+            sigma_y_eff = sigma_from_conf
+
+    # === ICI : utilise V_not_2D / V_pul_2D ===
+    t_matrix_not_pulse_2D = t_from_orbitals_V2D(V_not_2D, x, y, m_eff, sigma_y_eff, orbs_not)
+    t_matrix_pulse_2D     = t_from_orbitals_V2D(V_pul_2D, x, y, m_eff, sigma_y_eff, orbs_pul)
+    print("\n t 2D (not_imp) [eV]:\n", t_matrix_not_pulse_2D)
+    print("\n t 2D (with_imp) [eV]:\n", t_matrix_pulse_2D)
 
     # Petite démo de phase
     hbar_eVs = sc.hbar/sc.e
@@ -758,16 +960,16 @@ if __name__ == "__main__":
     print(f"\nt12={t12:.3e} eV   t23={t23:.3e} eV   t34={t34:.3e} eV")
     print(f"U_M={U_M:.3e} eV   J_M={J_M:.3e} eV   φ_M={phi_M:.3f} rad")
 
-    # # Plots (demo)
+    # # Plots 1D
     # plot_potential_with_orbitals(dot_x, V_not, x, orbs_not,
     #                              title="V(x) + orbitales (hors impulsion)")
     # plot_potential_with_orbitals(dot_x, V_pul, x, orbs_pul,
     #                              title="V(x) + orbitales (pendant impulsion)")
     
-    plot_potential_2D_x_y(V_not_2D, x, y, dot_x,
-                        title="V(x,y) (hors impulsion)")
-    plot_potential_2D_x_y(V_pul_2D, x, y, dot_x,
-                        title="V(x,y) (pendant impulsion)")
+    # plot_potential_2D_x_y(V_not_2D, x, y, dot_x,
+    #                     title="V(x,y) (hors impulsion)")
+    # plot_potential_2D_x_y(V_pul_2D, x, y, dot_x,
+    #                     title="V(x,y) (pendant impulsion)")
     
     plot_potential_3D_surface(V_not_2D, x, y, title="V(x,y) 3D (hors impulsion)", downsample=2)
     plot_potential_3D_wireframe(V_pul_2D, x, y, title="V(x,y) 3D (pendant impulsion)", step=8)

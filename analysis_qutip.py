@@ -21,14 +21,15 @@ from qutip_utils import (
 import U_t_2D_computing as computing
 from param_simu import(delta_U_meV, t_imp, Delta_t, T_final, 
                        num_sites, n_electrons, st_L, st_R, psi0_label,
-                       spin_pair, cases, psi0)
+                       psi0)
 
-t_matrix_not_pulse = None
-t_matrix_pulse     = None
-U_not_vec          = None
-U_pul_vec          = None
-
+import U_t_2D_computing as computing
+computing.t_matrix_not_pulse = None
+computing.t_matrix_pulse = None
+computing.U_not_vec = None
+computing.U_pul_vec = None
 computing._compute_if_needed(delta_U_meV=delta_U_meV)
+
 
 t_base, U_base = computing.t_matrix_not_pulse, computing.U_not_vec
 t_pulse, U_pulse = computing.t_matrix_pulse, computing.U_pul_vec
@@ -54,7 +55,78 @@ if np.any(U_base <= 0) or np.any(U_pulse <= 0):
     raise ValueError("U ≤ 0 (non physique) — vérifie la chaîne de calcul.")
 
 
-print("============= 2 qubits (4 sites)  —  impulsion =============")
+def try_get_left_amps(amps_list):
+        import numpy as _np
+        if amps_list is None:
+            return None
+        if isinstance(amps_list, dict):
+            AL = amps_list.get("L", None)
+            if AL is None:
+                return None
+            A = _np.asarray(AL)
+            if A.ndim == 2:
+                if A.shape[0] == 2: return A
+                if A.shape[1] == 2: return A.T
+            if isinstance(AL, (list, tuple)) and len(AL) == 2:
+                aL = _np.asarray(AL[0]).reshape(1, -1)
+                bL = _np.asarray(AL[1]).reshape(1, -1)
+                return _np.vstack([aL, bL])
+            return None
+        if isinstance(amps_list, (list, tuple)):
+            if len(amps_list) >= 2 and np.asarray(amps_list[0]).ndim == 1 and np.asarray(amps_list[1]).ndim == 1:
+                aL = np.asarray(amps_list[0]).reshape(1, -1)
+                bL = np.asarray(amps_list[1]).reshape(1, -1)
+                return np.vstack([aL, bL])
+            A0 = np.asarray(amps_list[0])
+            if A0.ndim == 2:
+                if A0.shape[0] == 2: return A0
+                if A0.shape[1] == 2: return A0.T
+        return None
+
+def try_get_right_amps(amps_list):
+    import numpy as _np
+    if amps_list is None:
+        return None
+
+    # Cas dict: {"L": ..., "R": ...}
+    if isinstance(amps_list, dict):
+        AR = amps_list.get("R", None)
+        if AR is None:
+            return None
+        A = _np.asarray(AR)
+        if A.ndim == 2:
+            if A.shape[0] == 2: return A
+            if A.shape[1] == 2: return A.T
+        if isinstance(AR, (list, tuple)) and len(AR) == 2:
+            aR = _np.asarray(AR[0]).reshape(1, -1)
+            bR = _np.asarray(AR[1]).reshape(1, -1)
+            return _np.vstack([aR, bR])
+        return None
+
+    # Cas liste/tuple: tolérant à plusieurs formats
+    if isinstance(amps_list, (list, tuple)):
+        # format possible: [aL, bL, aR, bR]
+        if len(amps_list) >= 4:
+            aR = _np.asarray(amps_list[2]).reshape(1, -1)
+            bR = _np.asarray(amps_list[3]).reshape(1, -1)
+            return _np.vstack([aR, bR])
+        # format possible: [<2xT pour L>, <2xT pour R>]
+        if len(amps_list) >= 2:
+            A1 = _np.asarray(amps_list[1])
+            if A1.ndim == 2:
+                if A1.shape[0] == 2: return A1
+                if A1.shape[1] == 2: return A1.T
+    return None
+
+def amps_from_bloch(x, y, z):
+    theta = np.arccos(np.clip(z, -1.0, 1.0))
+    phi   = np.arctan2(y, x)
+    alpha = np.cos(theta/2.0)
+    beta  = np.exp(1j*phi) * np.sin(theta/2.0)
+    v = np.array([[alpha],[beta]], dtype=complex)
+    n = np.linalg.norm(v)
+    return v/n if n > 0 else v
+
 
 # 0) Lance les pré-calculs (orbitales, t, U) UNE SEULE FOIS
 #    (si compute_static_demo() imprime des infos comme "Delta_U_meV : 0", c'est normal)
@@ -65,9 +137,7 @@ print("============= 2 qubits (4 sites)  —  impulsion =============")
 
 # Exemple d’utilisation :
 #left, right = cases[psi0_label]
-
 #psi0 = [spin_pair(st_L, left), -spin_pair(st_R, right)]
-print("psi0 : ", psi0_label)
 
 # psi0_label = "singlet-triplet"             
 # Exemple : |ψ_k⟩ = a_k |S_k⟩ + b_k |T0_k⟩ (tu peux remplacer par random_st_qubit_state si tu veux)
@@ -107,8 +177,8 @@ if __name__=="__main__":
     # psiR = random_st_qubit_state(basis_occ, (2, 3), rng)
 
     print("Delta_U : ", delta_U_meV)
-    t2 = time.time()
-    print(f"Temps de chargement : {t2 - t1:.2f} secondes")
+    t2_ = time.time()
+    print(f"Temps de chargement : {t2_  - t1:.2f} secondes")
 
     # ------------------------------------------------------------------
     # 4) Appel du helper « impulsion »
@@ -150,46 +220,10 @@ if __name__=="__main__":
         print("t non nuls (eV): min", nz.min(), "max", nz.max())
     print("t12=", t12, "eV   t23=", t23, "eV")
 
+    # ------------------------------------------------------------------
     # Fidélité qubit gauche
-    def try_get_left_amps(amps_list):
-        import numpy as _np
-        if amps_list is None:
-            return None
-        if isinstance(amps_list, dict):
-            AL = amps_list.get("L", None)
-            if AL is None:
-                return None
-            A = _np.asarray(AL)
-            if A.ndim == 2:
-                if A.shape[0] == 2: return A
-                if A.shape[1] == 2: return A.T
-            if isinstance(AL, (list, tuple)) and len(AL) == 2:
-                aL = _np.asarray(AL[0]).reshape(1, -1)
-                bL = _np.asarray(AL[1]).reshape(1, -1)
-                return _np.vstack([aL, bL])
-            return None
-        if isinstance(amps_list, (list, tuple)):
-            if len(amps_list) >= 2 and np.asarray(amps_list[0]).ndim == 1 and np.asarray(amps_list[1]).ndim == 1:
-                aL = np.asarray(amps_list[0]).reshape(1, -1)
-                bL = np.asarray(amps_list[1]).reshape(1, -1)
-                return np.vstack([aL, bL])
-            A0 = np.asarray(amps_list[0])
-            if A0.ndim == 2:
-                if A0.shape[0] == 2: return A0
-                if A0.shape[1] == 2: return A0.T
-        return None
-
+    # =============================
     A_L = try_get_left_amps(amps_list)
-
-    def amps_from_bloch(x, y, z):
-        theta = np.arccos(np.clip(z, -1.0, 1.0))
-        phi   = np.arctan2(y, x)
-        alpha = np.cos(theta/2.0)
-        beta  = np.exp(1j*phi) * np.sin(theta/2.0)
-        v = np.array([[alpha],[beta]], dtype=complex)
-        n = np.linalg.norm(v)
-        return v/n if n > 0 else v
-
     if A_L is not None:
         k_end = int(np.searchsorted(time_array, t_imp + Delta_t, side='right') - 1)
         k_end = max(0, min(k_end, len(time_array)-1))
@@ -210,6 +244,34 @@ if __name__=="__main__":
     alphaT, betaT = psiLtf[0, 0], psiLtf[1, 0]
     fidelity_L = abs(np.conj(alpha0)*alphaT + np.conj(beta0)*betaT)**2
     print("Fidélité qubit gauche (fin impulsion) :", float(fidelity_L))
+
+    # =============================
+    # Fidélité qubit droit (R)
+    # =============================
+
+    A_R = try_get_right_amps(amps_list)
+
+    if A_R is not None:
+        psiR0  = A_R[:, 0].reshape(2, 1)
+        psiRtf = A_R[:, k_end].reshape(2, 1)
+    else:
+        # Reconstruction depuis la trajectoire Bloch si les amplitudes ne sont pas exposées
+        coords_R = np.array(coords_list[1])
+        if coords_R.ndim == 2 and coords_R.shape[0] == 3:
+            coords_R = coords_R.T
+        x0, y0, z0 = coords_R[0]
+        xT, yT, zT = coords_R[-1]
+        psiR0  = amps_from_bloch(x0, y0, z0)
+        psiRtf = amps_from_bloch(xT, yT, zT)
+
+    # Fix de jauge (ne change pas la fidélité mais stabilise les phases affichées)
+    gR = psiRtf[0, 0] / abs(psiRtf[0, 0]) if abs(psiRtf[0, 0]) > 0 else 1.0
+    psiRtf = psiRtf / gR
+    alpha0_R, beta0_R = psiR0[0, 0], psiR0[1, 0]
+    alphaT_R, betaT_R = psiRtf[0, 0], psiRtf[1, 0]
+    fidelity_R = abs(np.conj(alpha0_R)*alphaT_R + np.conj(beta0_R)*betaT_R)**2
+    print("Fidélité qubit droit (fin impulsion)  :", float(fidelity_R))
+
 
     # fig = plt.gcf() 
     # out_dir = "sphere_bloch"

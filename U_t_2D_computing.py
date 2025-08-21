@@ -19,7 +19,7 @@ from param_simu import (Delta_t, T_final, t_imp, delta_U_meV,
 STRICT_U_SANITIZE = True
 # (réservé si tu veux plus tard clipper/symétriser t de façon agressive)
 ALLOW_T_CLIP = True
-
+print("Delta_u : ", delta_U_meV)
 # =============================================================================
 # Utilitaires généraux
 # =============================================================================
@@ -182,16 +182,16 @@ def assignment_report(orbitals, x, dot_x, window_nm=20, name="", thresh=None, de
     for i, phi in enumerate(orbitals):
         for j, xdot in enumerate(dot_x):
             M[i,j] = _mass_frac_window(phi, x, xdot, w)
-    # print(f"\n=== Assignation report ({name}) ===")
-    # for i in range(n):
-    #     j_star = int(np.argmax(M[i])); second = float(np.sort(M[i])[-2]) if m>=2 else 0.0
-    #     print(f"φ{i}: bary={bary[i]*1e9:7.2f} nm → dot{j_star} "
-    #           f"(x={dot_x[j_star]*1e9:6.1f} nm)  mass@*={M[i,j_star]:.3f}  2nd={second:.3f}")
-    # print("Confusion M[i,j]:\n", np.round(M,3))
-    # if thresh is not None:
-    #     bad = np.where(M.max(axis=1) < thresh)[0].tolist()
-    #     if bad: print(f"⚠️  Orbitales < {thresh:.2f} :", bad)
-    #     else:   print("✅ Toutes > seuil.")
+    print(f"\n=== Assignation report ({name}) ===")
+    for i in range(n):
+        j_star = int(np.argmax(M[i])); second = float(np.sort(M[i])[-2]) if m>=2 else 0.0
+        print(f"φ{i}: bary={bary[i]*1e9:7.2f} nm → dot{j_star} "
+              f"(x={dot_x[j_star]*1e9:6.1f} nm)  mass@*={M[i,j_star]:.3f}  2nd={second:.3f}")
+    print("Confusion M[i,j]:\n", np.round(M,3))
+    if thresh is not None:
+        bad = np.where(M.max(axis=1) < thresh)[0].tolist()
+        if bad: print(f"⚠️  Orbitales < {thresh:.2f} :", bad)
+        else:   print("✅ Toutes > seuil.")
     return M, bary
 
 def rotate_pair_any(orbitals, x, dot_x, i, j, window_nm=20, ngrid=721):

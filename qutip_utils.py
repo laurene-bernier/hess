@@ -272,6 +272,17 @@ def _auto_time_grid(H_or_list, t_final, nbr_pts=None):
 # ---------------------------------------------------------------------
 #  N  singlet–triplet qubits  (num_sites = 2N, n_electrons = 2N)
 # ---------------------------------------------------------------------
+
+def _ud_states_for_pair_from_st(st_dict):
+    """Transforme les états ST d'une paire en états UD normalisés."""
+    S  = st_dict["S"]
+    T0 = st_dict["T0"]
+    inv_sqrt2 = 1/np.sqrt(2)
+    ud = (T0 + S) * inv_sqrt2   # |↑↓>
+    du = (T0 - S) * inv_sqrt2   # |↓↑>
+    return {"ud": ud.unit(), "du": du.unit()}
+
+
 def _st_states_for_pair(basis_occ, pair):
     """
     Return {|S⟩,|T0⟩,|T+⟩,|T-⟩} as Qobj vectors for the two sites given in
@@ -735,15 +746,15 @@ def qubits_impulsion(num_sites, n_electrons,
         fig = plt.figure(figsize=(4 * ncols, 4 * nrows))
 
         # save attempt
-        # sauvegarde propre
-        import os
-        from param_simu import delta_U_meV
-        out_dir = "sphere_bloch"
-        os.makedirs(out_dir, exist_ok=True)
-        fname = f"spheres_dU_{float(delta_U_meV):.3f}meV_dT_{float(Delta_t)*1e9:.3f}ns.png"
-        out_path = os.path.join(out_dir, fname)
-        fig.savefig(out_path, dpi=300, bbox_inches="tight")
-        print("🖼️ Image sauvegardée :", out_path)
+        # # sauvegarde propre
+        # import os
+        # from param_simu import delta_U_meV
+        # out_dir = "sphere_bloch"
+        # os.makedirs(out_dir, exist_ok=True)
+        # fname = f"spheres_dU_{float(delta_U_meV):.3f}meV_dT_{float(Delta_t)*1e9:.3f}ns.png"
+        # out_path = os.path.join(out_dir, fname)
+        # fig.savefig(out_path, dpi=300, bbox_inches="tight")
+        # print("🖼️ Image sauvegardée :", out_path)
 
         for idx, coords in enumerate(coords_list):
             if coords.shape[0] != pulse_mask.shape[0]:
