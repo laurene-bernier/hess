@@ -277,7 +277,7 @@ def plot_detector_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=No
         out_path = os.path.join(out_dir, fname)
         plt.savefig(out_path, dpi=200, bbox_inches='tight')
         print(f"🖼️ Figure sauvegardée : {out_path}")
-    plt.show()
+    plt.show(block=False)
 
 
 # --- QUBIT DROIT UNIQUEMENT ---
@@ -718,7 +718,7 @@ def plot_fidelity_detector_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=N
         out_path = os.path.join(out_dir, fname)
         plt.savefig(out_path, dpi=200, bbox_inches='tight')
         print(f"🖼️ Figure sauvegardée : {out_path}")
-    plt.show()
+    plt.show(block=False)
 
 def main_detector(delta_U_vals_full, delta_t_vals_full):
     print("🚀 Démarrage map_detection (nouveau pipeline)")
