@@ -97,6 +97,189 @@ class OnlineETA:
             self.mean = self.alpha*float(x) + (1.0 - self.alpha)*self.mean
         return self.mean
 
+def project_ST0_normed_right(psi_final, qR):
+    """
+    Amplitudes dans la base orthonormée { |Ŝ_R>, |T̂0_R> }.
+    Les vecteurs qR["0"], qR["1"] peuvent être normalisés à sqrt(1/2) dans ton setup,
+    on renormalise donc explicitement.
+    """
+    S  = qR["0"];  T0 = qR["1"]
+    nS = (S.overlap(S).real)**0.5
+    nT = (T0.overlap(T0).real)**0.5
+    a  = S.overlap(psi_final)  / (nS if nS > 0 else 1.0)
+    b  = T0.overlap(psi_final) / (nT if nT > 0 else 1.0)
+    return a, b
+
+def right_qubit_spinor_unit(psi_final, qR, eps=1e-14):
+    """
+    Renvoie (a_u, b_u, pop_ST0) avec (a_u, b_u) renormalisés dans le sous-espace {S_R, T0_R}.
+    pop_ST0 = |a|^2 + |b|^2 avant renormalisation (mesure de fuite hors sous-espace).
+    """
+    a, b = project_ST0_normed_right(psi_final, qR)
+    pop = (abs(a)**2 + abs(b)**2)
+    if pop <= eps:
+        return 0.0+0.0j, 0.0+0.0j, float(pop)
+    nrm = pop**0.5
+    return a/nrm, b/nrm, float(pop)
+
+def compute_or_load_baseline_detector_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
+                                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    """
+    Baseline spinor du qubit droit: pour chaque Δt, on stocke qR0(Δt) = (a0[j], b0[j])
+    obtenu à ΔU = 0, déjà unitaire dans {S_R, T0_R}.
+    """
+    if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE_SPINOR):
+        try:
+            data = np.load(BASELINE_FILE_SPINOR)
+            if np.array_equal(data.get("delta_t_vals"), delta_t_vals):
+                return data["a0"], data["b0"]
+        except Exception:
+            pass
+        print("⚠️ Baseline spinor (detector) incompatible avec la grille actuelle. Recalcul…")
+
+    print("🧭 Calcul baseline spinor du qubit droit (ΔU=0)…")
+    a0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
+    b0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
+
+    for j, delta_t in enumerate(tqdm(delta_t_vals, desc="Baseline spinor Δt", unit="Δt")):
+        T_eV, U_eV = compute_txU_for_pulse(delta_t, 0.0, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state0 = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+        a_u, b_u, _ = right_qubit_spinor_unit(final_state0, logical_qubits[1])
+        a0[j], b0[j] = a_u, b_u
+
+    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals)
+    return a0, b0
+
+def row_path_overlap(base_dir: str, i: int) -> str:
+    return os.path.join(base_dir, f"p_detector_overlap_row_{i:03d}.npy")
+
+def _compute_row_for_deltaU_detector_overlap(i, delta_U_meV, delta_t_vals, a0, b0, base_dir,
+                                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    """
+    p_same = |⟨qR0(Δt)| qR(ΔU,Δt)⟩|^2.
+    Écriture incrémentale en memmap.
+    """
+    from numpy.lib.format import open_memmap
+    t_line0 = time.perf_counter()
+    out_file = row_path_overlap(base_dir, i)
+    print(f"[pid {os.getpid()}] start row (overlap detector) ΔU={delta_U_meV:.3f} meV")
+
+    # memmap (création ou reprise)
+    if (not FORCE_RECALC) and os.path.exists(out_file):
+        p_row_mm = open_memmap(out_file, mode='r+')
+        if p_row_mm.shape != (len(delta_t_vals),):
+            del p_row_mm
+            os.remove(out_file)
+            p_row_mm = open_memmap(out_file, mode='w+', dtype='float32', shape=(len(delta_t_vals),))
+            p_row_mm[:] = np.nan
+    else:
+        p_row_mm = open_memmap(out_file, mode='w+', dtype='float32', shape=(len(delta_t_vals),))
+        p_row_mm[:] = np.nan
+
+    eps = 1e-14
+    for j, delta_t in enumerate(tqdm(delta_t_vals, desc=f"  → ΔU = {delta_U_meV:.3f} meV", unit="Δt", leave=False)):
+        if np.isfinite(p_row_mm[j]):
+            continue
+
+        # Évolution pour (ΔU, Δt)
+        T_eV, U_eV = compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+
+        # Spinor du qubit droit (unitaire dans {S_R,T0_R})
+        a_u, b_u, _ = right_qubit_spinor_unit(final_state, logical_qubits[1])
+
+        # Spinor de référence à même Δt (déjà unitaire)
+        ar, br = a0[j], b0[j]
+        nr = (abs(ar)**2 + abs(br)**2)**0.5
+        if nr <= eps:
+            p_same = 0.0
+        else:
+            ar /= nr; br /= nr
+            amp = np.conj(ar)*a_u + np.conj(br)*b_u
+            p_same = float(abs(amp)**2)
+
+        p_row_mm[j] = max(0.0, min(1.0, p_same))
+        if (j + 1) % 50 == 0:
+            p_row_mm.flush(); gc.collect()
+
+    p_row_mm.flush(); del p_row_mm
+    print(f"  ↳ ligne (overlap detector) ΔU={delta_U_meV:.3f} meV faite en {_fmt_time(time.perf_counter() - t_line0)}")
+    return out_file
+
+def build_detector_overlap_rows(delta_U_vals, delta_t_vals, a0, b0, base_dir,
+                                imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    print("🧪 Scan proba qubit droit identique |⟨qR0|qR⟩|² — DÉTECTEUR…")
+    todo = [i for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path_overlap(base_dir, i)))]
+    if not todo:
+        print("✅ Toutes les lignes overlap existent déjà — pas de recalcul.")
+        return
+    if USE_PARALLEL and len(todo) > 1:
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+        with ProcessPoolExecutor(max_workers=MAX_WORKERS) as ex, tqdm(total=len(todo), desc="ΔU rows (overlap)", unit="row") as pbar:
+            fut_to_i = {ex.submit(_compute_row_for_deltaU_detector_overlap, i, float(delta_U_vals[i]), delta_t_vals, a0, b0, base_dir,
+                                  imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts): i for i in todo}
+            for fut in as_completed(fut_to_i):
+                _ = fut.result()
+                pbar.update(1)
+    else:
+        for i in tqdm(todo, desc="ΔU (overlap)", unit="ΔU"):
+            _compute_row_for_deltaU_detector_overlap(i, float(delta_U_vals[i]), delta_t_vals, a0, b0, base_dir,
+                                                     imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+            gc.collect()
+
+def load_detector_overlap_map(U_vals, T_vals, base_dir):
+    rows = []
+    for i in range(len(U_vals)):
+        f = row_path_overlap(base_dir, i)
+        if os.path.exists(f):
+            arr = np.load(f, mmap_mode='r')
+            nT = len(T_vals)
+            if len(arr) == nT:
+                rows.append(np.asarray(arr))
+            elif len(arr) < nT:
+                tmp = np.full(nT, np.nan, dtype=np.float32)
+                tmp[:len(arr)] = np.asarray(arr)
+                rows.append(tmp)
+            else:
+                rows.append(np.asarray(arr)[:nT])
+        else:
+            print(f"⚠️ Ligne overlap manquante (NaN) : {f}")
+            rows.append(np.full(len(T_vals), np.nan, dtype=np.float32))
+    return np.vstack(rows)
+
+def plot_detector_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None):
+    plt.figure(figsize=(8,6))
+    extent = [T_vals[0]*1e9, T_vals[-1]*1e9, U_vals[0], U_vals[-1]]
+    im = plt.imshow(p_map, aspect='auto', origin='lower', extent=extent,
+                    cmap='viridis', interpolation='nearest', vmin=0, vmax=1)
+    plt.colorbar(im, label="Proba qubit droit identique  |⟨qR₀(Δt)|qR(ΔU,Δt)⟩|²")
+    plt.xlabel("Δt (ns)"); plt.ylabel("ΔU (meV)")
+    title = "Détecteur (qubit droit) : probabilité de retrouver l’état de référence"
+    if isinstance(psi0_label, str) and psi0_label.strip():
+        title += f"\nConfiguration : {psi0_label}"
+    plt.title(title); plt.tight_layout()
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        fname = f"p_detector_overlap_map_{len(U_vals)}x{len(T_vals)}_{stamp}.png"
+        out_path = os.path.join(out_dir, fname)
+        plt.savefig(out_path, dpi=200, bbox_inches='tight')
+        print(f"🖼️ Figure sauvegardée : {out_path}")
+    plt.show()
+
+
 # --- QUBIT DROIT UNIQUEMENT ---
 def extract_qubit_R(final_state, logical_qubits):
     """
@@ -191,7 +374,7 @@ def qubits_impulsion_lastonly(num_sites, n_electrons,
         progress_bar=None,
         rtol=min(_get_opt(SE_OPTS, "rtol", 1e-6), 5e-5),
         atol=min(_get_opt(SE_OPTS, "atol", 1e-8), 1e-7),  # conservé
-        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
+        #nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
         method="bdf"
     )
 
@@ -613,6 +796,23 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
     print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
 
     # 2) (ETA globale par bench désactivée)
+        # 1) baseline φ0 (ΔU=0)
+    t_step0 = time.perf_counter()
+    phi0 = compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
+                                         idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+    print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
+
+    # ▶ Option A : baseline spinor + cartes d’overlap du qubit droit
+    BASELINE_FILE_SPINOR = os.path.join(data_dir, "detector_right_baseline_spinor.npz")
+    a0, b0 = compute_or_load_baseline_detector_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
+                                                      idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+
+    build_detector_overlap_rows(delta_U_vals, delta_t_vals, a0, b0, data_dir,
+                                idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+
+    p_overlap = load_detector_overlap_map(delta_U_vals, delta_t_vals, data_dir)
+    plot_detector_overlap_map(p_overlap, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
+
 
     # 3) calcul des lignes ΔU (écriture incrémentale par Δt) + barres tqdm ΔU
     t_step1 = time.perf_counter()
@@ -622,20 +822,20 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
 
     # 4) reconstruction et upsampling éventuel
     t_step2 = time.perf_counter()
-    fidelity_map_coarse = load_fidelity_detector_map(delta_U_vals, delta_t_vals, data_dir)
-    print("fidelity_map_coarse Nb NaN :", np.isnan(fidelity_map_coarse).sum(), " / ", fidelity_map_coarse.size)
+    # fidelity_map_coarse = load_fidelity_detector_map(delta_U_vals, delta_t_vals, data_dir)
+    # print("fidelity_map_coarse Nb NaN :", np.isnan(fidelity_map_coarse).sum(), " / ", fidelity_map_coarse.size)
 
-    if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != len(delta_U_vals)) or (len(delta_t_vals_full) != len(delta_t_vals))):
-        print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
-        fidelity_map_full = interpolate_to_full(fidelity_map_coarse, delta_U_vals, delta_t_vals,
-                                                delta_U_vals_full, delta_t_vals_full)
-        np.save(os.path.join(data_dir, f"fidelity_detector_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"),
-                fidelity_map_full)
-        print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
-        plot_fidelity_detector_map(fidelity_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
-    else:
-        print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
-        plot_fidelity_detector_map(fidelity_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
+    # if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != len(delta_U_vals)) or (len(delta_t_vals_full) != len(delta_t_vals))):
+    #     print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
+    #     fidelity_map_full = interpolate_to_full(fidelity_map_coarse, delta_U_vals, delta_t_vals,
+    #                                             delta_U_vals_full, delta_t_vals_full)
+    #     np.save(os.path.join(data_dir, f"fidelity_detector_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"),
+    #             fidelity_map_full)
+    #     print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
+    #     plot_fidelity_detector_map(fidelity_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
+    # else:
+    #     print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
+    #     plot_fidelity_detector_map(fidelity_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
     print(f"⏱️ Reconstruction + plot en {_fmt_time(time.perf_counter() - t_step2)}")
 
 # =============================== MAIN ===============================

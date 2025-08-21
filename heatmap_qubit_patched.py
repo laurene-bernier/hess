@@ -68,6 +68,175 @@ UPDATE_EVERY_S      = 1.0    # throttle des mises à jour ETA
 # --- Globals visibles dans les sous-processus ---
 SE_OPTS = {"rtol": 1e-6, "atol": 1e-8 }#, "nsteps": 10000}  # défaut safe
 
+def row_path_overlap(base_dir: str, i: int) -> str:
+    return os.path.join(base_dir, f"p_qubit_overlap_row_{i:03d}.npy")
+
+def _compute_row_for_deltaU_qubit_overlap(i, delta_U_meV, delta_t_vals, a0, b0, base_dir,
+                                          imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    """
+    p_same = |<qL0(Δt)| qL(ΔU,Δt)>|^2  où les deux spinors sont unitaires dans {S,T0}.
+    Écriture incrémentale en memmap.
+    """
+    from numpy.lib.format import open_memmap
+    t_line0 = time.perf_counter()
+    out_file = row_path_overlap(base_dir, i)
+    print(f"[pid {os.getpid()}] start row (overlap) ΔU={delta_U_meV:.3f} meV")
+
+    # memmap (création si besoin)
+    if (not FORCE_RECALC) and os.path.exists(out_file):
+        p_row_mm = open_memmap(out_file, mode='r+')
+        if p_row_mm.shape != (len(delta_t_vals),):
+            del p_row_mm
+            os.remove(out_file)
+            p_row_mm = open_memmap(out_file, mode='w+', dtype='float32', shape=(len(delta_t_vals),))
+            p_row_mm[:] = np.nan
+    else:
+        p_row_mm = open_memmap(out_file, mode='w+', dtype='float32', shape=(len(delta_t_vals),))
+        p_row_mm[:] = np.nan
+
+    eps = 1e-14
+    for j, delta_t in enumerate(tqdm(delta_t_vals, desc=f"  → ΔU = {delta_U_meV:.3f} meV", unit="Δt", leave=False)):
+        if np.isfinite(p_row_mm[j]):
+            continue
+
+        # Evolution pour (ΔU, Δt)
+        T_eV, U_eV = compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+        a_u, b_u, pop = qubit_L_spinor_unit(final_state, logical_qubits[0])
+
+        # spinor ref à même Δt
+        ar, br = a0[j], b0[j]
+        nr = (abs(ar)**2 + abs(br)**2)**0.5
+        if nr <= eps:
+            p_same = 0.0  # baseline mal définie à ce Δt
+        else:
+            ar /= nr; br /= nr
+            amp = np.conj(ar)*a_u + np.conj(br)*b_u
+            p_same = float(abs(amp)**2)          # ∈ [0,1]
+
+        p_row_mm[j] = max(0.0, min(1.0, p_same))
+        if (j + 1) % 50 == 0:
+            p_row_mm.flush(); gc.collect()
+
+    p_row_mm.flush(); del p_row_mm
+    print(f"  ↳ ligne (overlap) ΔU={delta_U_meV:.3f} meV faite en {_fmt_time(time.perf_counter() - t_line0)}")
+    return out_file
+
+def build_qubit_overlap_rows(delta_U_vals, delta_t_vals, a0, b0, base_dir,
+                             imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    print("🧪 Scan proba qubit identique |⟨qL0|qL⟩|² — QUBIT GAUCHE…")
+    todo = [i for i in range(len(delta_U_vals)) if (FORCE_RECALC or not os.path.exists(row_path_overlap(base_dir, i)))]
+    if not todo:
+        print("✅ Toutes les lignes overlap existent déjà — pas de recalcul.")
+        return
+    if USE_PARALLEL and len(todo) > 1:
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+        with ProcessPoolExecutor(max_workers=MAX_WORKERS) as ex, tqdm(total=len(todo), desc="ΔU rows (overlap)", unit="row") as pbar:
+            fut_to_i = {ex.submit(_compute_row_for_deltaU_qubit_overlap, i, float(delta_U_vals[i]), delta_t_vals, a0, b0, base_dir,
+                                  imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts): i for i in todo}
+            for fut in as_completed(fut_to_i):
+                _ = fut.result()
+                pbar.update(1)
+    else:
+        for i in tqdm(todo, desc="ΔU (overlap)", unit="ΔU"):
+            _compute_row_for_deltaU_qubit_overlap(i, float(delta_U_vals[i]), delta_t_vals, a0, b0, base_dir,
+                                                  imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+            gc.collect()
+
+def qubit_L_spinor_unit(psi_final, qL, eps=1e-14):
+    """
+    Spinor du qubit gauche dans la base { |S>, |T0> }, renormalisé dans ce sous-espace.
+    Retourne (a_u, b_u, pop_ST0) où pop_ST0 = |a|^2+|b|^2 AVANT renormalisation.
+    """
+    a, b = project_ST0_normed(psi_final, qL)     # amplitudes dans la base orthonormée (Ŝ, T̂0)
+    pop = (abs(a)**2 + abs(b)**2)
+    if pop <= eps:
+        # fuite quasi-totale hors {S,T0} → probas d’overlap peu fiables
+        return 0.0+0.0j, 0.0+0.0j, float(pop)
+    nrm = pop**0.5
+    return a/nrm, b/nrm, float(pop)
+
+def load_overlap_map(U_vals, T_vals, base_dir):
+    rows = []
+    for i in range(len(U_vals)):
+        f = row_path_overlap(base_dir, i)
+        if os.path.exists(f):
+            arr = np.load(f, mmap_mode='r')
+            nT = len(T_vals)
+            if len(arr) == nT:
+                rows.append(np.asarray(arr))
+            elif len(arr) < nT:
+                tmp = np.full(nT, np.nan, dtype=np.float32)
+                tmp[:len(arr)] = np.asarray(arr)
+                rows.append(tmp)
+            else:
+                rows.append(np.asarray(arr)[:nT])
+        else:
+            print(f"⚠️ Ligne overlap manquante (NaN) : {f}")
+            rows.append(np.full(len(T_vals), np.nan, dtype=np.float32))
+    return np.vstack(rows)
+
+def plot_qubit_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None):
+    plt.figure(figsize=(8,6))
+    extent = [T_vals[0]*1e9, T_vals[-1]*1e9, U_vals[0], U_vals[-1]]
+    im = plt.imshow(p_map, aspect='auto', origin='lower', extent=extent,
+                    cmap='viridis', interpolation='nearest', vmin=0, vmax=1)
+    plt.colorbar(im, label="Proba qubit identique  |⟨qL₀(Δt)|qL(ΔU,Δt)⟩|²")
+    plt.xlabel("Δt (ns)"); plt.ylabel("ΔU (meV)")
+    title = "Qubit gauche : probabilité de retrouver l’état de référence"
+    if isinstance(psi0_label, str) and psi0_label.strip():
+        title += f"\nConfiguration : {psi0_label}"
+    plt.title(title); plt.tight_layout()
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+        from datetime import datetime
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        fname = f"p_qubit_overlap_map_left_{len(U_vals)}x{len(T_vals)}_{stamp}.png"
+        out_path = os.path.join(out_dir, fname)
+        plt.savefig(out_path, dpi=200, bbox_inches='tight')
+        print(f"🖼️ Figure sauvegardée : {out_path}")
+    plt.show()
+
+def compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
+                                          imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
+    """
+    Baseline qubit: stocke pour chaque Δt le spinor unitaire (a0[j], b0[j]) à ΔU=0.
+    Fichier: npz {a0: complex[], b0: complex[], delta_t_vals}.
+    """
+    if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE_SPINOR):
+        try:
+            data = np.load(BASELINE_FILE_SPINOR)
+            if np.array_equal(data.get("delta_t_vals"), delta_t_vals):
+                return data["a0"], data["b0"]
+        except Exception:
+            pass
+        print("⚠️ Baseline spinor qubit incompatible avec la grille actuelle. Recalcul…")
+
+    print("🧭 Calcul baseline spinor qubit gauche (ΔU=0)…")
+    a0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
+    b0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
+
+    for j, delta_t in enumerate(tqdm(delta_t_vals, desc="Baseline qubit Δt", unit="Δt")):
+        T_eV, U_eV = compute_txU_for_pulse(delta_t, 0.0, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state0 = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+        a_u, b_u, _ = qubit_L_spinor_unit(final_state0, logical_qubits[0])
+        a0[j], b0[j] = a_u, b_u
+
+    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals)
+    return a0, b0
+
 # ========================= Utilitaires ===========================
 def _slug(s: str) -> str:
     return "".join(c if c.isalnum() or c in "-_." else "-" for c in str(s).strip())
@@ -82,7 +251,7 @@ def wrap_pi(angle):
 def phase_relative(a, b):
     if (np.abs(a) < 1e-15 and np.abs(b) < 1e-15):
         return 0.0
-    return wrap_pi(np.angle(a) - np.angle(b))
+    return wrap_pi(np.angle(b) - np.angle(a))
 
 class OnlineETA:
     """Moyenne exponentielle pour estimer un temps moyen par tâche."""
@@ -105,6 +274,11 @@ def extract_qubit_L(final_state, logical_qubits):
     Convention du projet: logical_qubits[0] = gauche, logical_qubits[1] = droite.
     """
     qL = logical_qubits[0]  # LEFT
+    qL = logical_qubits[0]
+    print("⟨S|S⟩=", qL["0"].overlap(qL["0"]))
+    print("⟨T0|T0⟩=", qL["1"].overlap(qL["1"]))
+    print("⟨S|T0⟩=", qL["0"].overlap(qL["1"]))  # doit ~ 0
+
     a = qL["0"].overlap(final_state)  # |S>
     b = qL["1"].overlap(final_state)  # |T0>
     return a, b
@@ -134,6 +308,28 @@ def _get_opt(opt, key, default):
     except Exception:
         return default
 
+# phase problème : 
+# --- Debug phases ------------------------------------------------------------
+DEBUG_PHASE = True  # passe à False pour couper les logs
+
+def dbg_phase(tag, a, b, phi0_val=None):
+    import numpy as _np
+    mag_a, mag_b = _np.abs(a), _np.abs(b)
+    pha, phb     = _np.angle(a), _np.angle(b)  # en radians [-π, π]
+    rel          = wrap_pi(phb - pha)
+    msg = (f"[{tag}] |a|={mag_a:.3e} |b|={mag_b:.3e}  "
+           f"∠a={pha:.3f} rad  ∠b={phb:.3f} rad  φ(rel)={rel:.3f} rad")
+    if phi0_val is not None:
+        dphi = wrap_pi(rel - float(phi0_val))
+        
+        msg += (f"  φ0={float(phi0_val):.3f}  Δφ={dphi:.3f}  "
+                f"cos²(Δφ/2)={_np.cos(0.5*dphi)**2:.4f}")
+    if DEBUG_PHASE:
+        if (mag_a < 1e-9) or (mag_b < 1e-9):
+            msg += "  ⚠️ phase peu fiable (|a| ou |b| ≪ 1)"
+        print(msg, flush=True)
+
+
 def qubits_impulsion_lastonly(num_sites, n_electrons,
                               H_base, H_pulse,
                               t_imp, Delta_t,
@@ -155,7 +351,7 @@ def qubits_impulsion_lastonly(num_sites, n_electrons,
         progress_bar=None,
         rtol=min(_get_opt(SE_OPTS, "rtol", 1e-6), 5e-5),
         atol=min(_get_opt(SE_OPTS, "atol", 1e-8), 1e-7),
-        nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
+        #nsteps=max(_get_opt(SE_OPTS, "nsteps", 10000), 10000), # nsteps
         method="bdf"
     )
 
@@ -177,6 +373,15 @@ def _mean_Vx_over_window(pot_xt, start_idx, end_idx):
         if len(window) == 1:
             return np.array(window[0], copy=False)
         return np.mean(np.stack(window, axis=0), axis=0)
+
+def project_ST0_normed(psi_final, qL):
+    S  = qL["0"];  T0 = qL["1"]
+    nS = (S.overlap(S).real)**0.5     # = sqrt(0.5) chez toi
+    nT = (T0.overlap(T0).real)**0.5
+    a  = S.overlap(psi_final)  / nS   # amplitude dans |Ŝ> (norme 1)
+    b  = T0.overlap(psi_final) / nT   # amplitude dans |T̂0>
+    return a, b
+
 
 # =================== t(ΔU,Δt) & U(ΔU,Δt) via orbitales ===================
 def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
@@ -205,6 +410,8 @@ def compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx):
         steps   = max(1, int(np.ceil(delta_t / dt_sim)))
         imp_end = min(len(time_array), imp_start_idx + steps)
         V_x     = _mean_Vx_over_window(pot_xt, imp_start_idx, imp_end)
+    phys_dt_ns = float(delta_t) * 1e9
+    print(f"[ΔU={delta_U_meV:.3f} meV  Δt={phys_dt_ns:.3f} ns] ...")
 
     # États propres + localisation robuste
     _, orbs_raw = get_eigs(V_x, x, m_eff, num_states=4)
@@ -245,9 +452,12 @@ def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
         t_imp=t_imp, Delta_t=float(delta_t_vals[0]), T_final=T_final,
         psi0_full=psi0_full, nbr_pts=nbr_pts
     )
-    a0, b0 = extract_qubit_L(final_state, logical_qubits)
+    #a0, b0 = extract_qubit_L(final_state, logical_qubits)
+    a0, b0 = project_ST0_normed(final_state, logical_qubits[0])
     phi0_val = phase_relative(a0, b0)
     phi0 = np.full(len(delta_t_vals), phi0_val, dtype=np.float64)
+    if DEBUG_PHASE:
+        dbg_phase(f"baseline Δt={float(delta_t_vals[0])*1e9:.3f} ns", a0, b0)
 
     np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
     return phi0
@@ -268,8 +478,8 @@ def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
     phi0 = np.zeros(len(delta_t_vals), dtype=np.float64)
     for j, delta_t in enumerate(tqdm(delta_t_vals, desc="Baseline Δt", unit="Δt")):
         T_eV, U_eV = compute_txU_for_pulse(delta_t, 0.0, imp_start_idx)
-        print("map_qubit_L : t_matrix_pulse=", T_eV)
-        print("U_pul_vec : ", U_eV)
+        #print("map_qubit_L : t_matrix_pulse=", T_eV)
+        #print("U_pul_vec : ", U_eV)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
         final_state = qubits_impulsion_lastonly(
             num_sites=num_sites, n_electrons=n_electrons,
@@ -277,7 +487,8 @@ def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        a0, b0 = extract_qubit_L(final_state, logical_qubits)
+        #a0, b0 = extract_qubit_L(final_state, logical_qubits)
+        a0, b0 = project_ST0_normed(final_state, logical_qubits[0])
         phi0[j] = phase_relative(a0, b0)
 
     np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
@@ -315,16 +526,21 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
 
         T_eV, U_eV = compute_txU_for_pulse(delta_t, delta_U_meV, imp_start_idx)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
-        print("map_qubit_L : t_matrix_pulse=", T_eV)
-        print("U_pul_vec : ", U_eV)
+        # print("map_qubit_L : t_matrix_pulse=", T_eV)
+        # print("U_pul_vec : ", U_eV)
         final_state = qubits_impulsion_lastonly(
             num_sites=num_sites, n_electrons=n_electrons,
             H_base=H_base, H_pulse=H_pulse,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        aL, bL = extract_qubit_L(final_state, logical_qubits)
+        #aL, bL = extract_qubit_L(final_state, logical_qubits)
+        aL, bL = project_ST0_normed(final_state, logical_qubits[0])
+        if DEBUG_PHASE and (j < 5 or j % 50 == 0 or j == len(delta_t_vals)-1):
+            dbg_phase(f"ΔU={delta_U_meV:.3f} meV  Δt={delta_t*1e9:.3f} ns", aL, bL, phi0[j])
+        print(f"UU→ phase_relative = {phase_relative(aL, bL)}")
         dphi = wrap_pi(phase_relative(aL, bL) - phi0[j])
+
         p_row_mm[j] = float(np.cos(0.5 * dphi)**2)  # prob. de non-changement de phase
 
         if (j + 1) % 50 == 0:
@@ -352,8 +568,36 @@ def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        aL, bL = extract_qubit_L(final_state, logical_qubits)
+        #aL, bL = extract_qubit_L(final_state, logical_qubits)
+        aL, bL = project_ST0_normed(final_state, logical_qubits[0])
+
         _ = np.cos(0.5 * wrap_pi(phase_relative(aL, bL) - phi0[idxs[j]]))**2
+        # Après final_state = qubits_impulsion_lastonly(...)
+        #aL, bL = extract_qubit_L(final_state, logical_qubits)
+        aL, bL = project_ST0_normed(final_state, logical_qubits[0])
+
+
+        # 1) Normes et fuite hors sous-espace {S, T0}
+        pop_S = abs(aL)**2
+        pop_T0 = abs(bL)**2
+        leak   = 1.0 - (pop_S + pop_T0)
+        print(f"pop(S)={pop_S:.6f}, pop(T0)={pop_T0:.6f}, leakage={leak:.6e}")
+
+        # 2) Phases absolues et relative
+        arg_a = np.angle(aL); arg_b = np.angle(bL)
+        phi_rel = phase_relative(aL, bL)   # = wrap_pi(arg_a - arg_b)
+        print(f"∠a={arg_a:+.3f} rad, ∠b={arg_b:+.3f} rad, φ(rel)={phi_rel:+.3f} rad")
+
+        # 3) Comparaison baseline + proba
+        dphi = wrap_pi(phi_rel - phi0[j])
+        print(f"φ0={phi0[j]:+.3f}  Δφ={dphi:+.3f}  cos²(Δφ/2)={np.cos(0.5*dphi)**2:.4f}")
+
+        # 4) Test de jauge (invariance de la phase relative)
+        psi_gauge = (np.exp(-1j*arg_b) * final_state)  # remet ∠b à 0
+        aG = logical_qubits[0]["0"].overlap(psi_gauge)
+        bG = logical_qubits[0]["1"].overlap(psi_gauge)
+        print(f"[gauge] ∠a'={np.angle(aG):+.3f}, ∠b'={np.angle(bG):+.3f} (doit ~0), φ(rel)'={phase_relative(aG,bG):+.3f}")
+
     elapsed = time.perf_counter() - start
     return elapsed * (len(delta_t_vals) / max(1, len(dt_s)))
 
@@ -570,7 +814,16 @@ def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
                                     idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
     print(f"⏱️ Baseline calculée en {_fmt_time(time.perf_counter() - t_step0)} ({len(phi0)} Δt).")
 
-    # 2) (ETA globale par bench désactivée)
+    # 2) # === Option A (overlap de qubit) === fidélité
+    BASELINE_FILE_SPINOR = os.path.join(data_dir, "qubit_left_baseline_spinor.npz")
+    a0, b0 = compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
+                                                   idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+
+    build_qubit_overlap_rows(delta_U_vals, delta_t_vals, a0, b0, data_dir,
+                             idx_t_imp, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
+
+    p_overlap = load_overlap_map(delta_U_vals, delta_t_vals, data_dir)
+    plot_qubit_overlap_map(p_overlap, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
 
     # 3) calcul des lignes ΔU (écriture incrémentale par Δt) + barres tqdm ΔU
     t_step1 = time.perf_counter()
@@ -580,20 +833,20 @@ def main_qubit_left(delta_U_vals_full, delta_t_vals_full):
 
     # 4) reconstruction et upsampling éventuel
     t_step2 = time.perf_counter()
-    p_map_coarse = load_p_nochange_map(delta_U_vals, delta_t_vals, data_dir)
-    print("p_map_coarse Nb NaN :", np.isnan(p_map_coarse).sum(), " / ", p_map_coarse.size)
+    # p_map_coarse = load_p_nochange_map(delta_U_vals, delta_t_vals, data_dir)
+    # print("p_map_coarse Nb NaN :", np.isnan(p_map_coarse).sum(), " / ", p_map_coarse.size)
 
-    if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != len(delta_U_vals)) or (len(delta_t_vals_full) != len(delta_t_vals))):
-        print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
-        p_map_full = interpolate_to_full(p_map_coarse, delta_U_vals, delta_t_vals,
-                                         delta_U_vals_full, delta_t_vals_full)
-        np.save(os.path.join(data_dir, f"p_nochange_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"),
-                p_map_full)
-        print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
-        plot_p_nochange_map(p_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
-    else:
-        print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
-        plot_p_nochange_map(p_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
+    # if UPSAMPLE_TO_HIGHRES and ((len(delta_U_vals_full) != len(delta_U_vals)) or (len(delta_t_vals_full) != len(delta_t_vals))):
+    #     print(f"🧩 Interpolation vers {len(delta_U_vals_full)}x{len(delta_t_vals_full)}…")
+    #     p_map_full = interpolate_to_full(p_map_coarse, delta_U_vals, delta_t_vals,
+    #                                      delta_U_vals_full, delta_t_vals_full)
+    #     np.save(os.path.join(data_dir, f"p_nochange_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"),
+    #             p_map_full)
+    #     print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
+    #     plot_p_nochange_map(p_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
+    # else:
+    #     print(f"✅ Temps total d'exécution : {_fmt_time(time.perf_counter() - t_total0)}")
+    #     plot_p_nochange_map(p_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
     print(f"⏱️ Reconstruction + plot en {_fmt_time(time.perf_counter() - t_step2)}")
 
 # =============================== MAIN ===============================
@@ -611,7 +864,7 @@ if __name__ == "__main__":
     U_base = np.clip(np.nan_to_num(U_base, nan=0.0, posinf=0.0, neginf=0.0), 1e-5, 0.5)
     H_base = build_spinful_hubbard_hamiltonian(num_sites, T_base, U_base, basis_occ)
 
-    print("map_qubit_L : t_matrix_not_pulse=", T_base)
-    print("U_not_pul : ", U_base)
+    # print("map_qubit_L : t_matrix_not_pulse=", T_base)
+    # print("U_not_pul : ", U_base)
 
     main_qubit_left(delta_U_vals_full, delta_t_vals_full)

@@ -84,9 +84,9 @@ y  = np.linspace(-5*sigma_y, 5*sigma_y, Ny)
 
 # Default timing used by *examples* (your map code defines its own time grid)
 t_imp   = 0.1e-9
-Delta_t = 0.4e-9
+Delta_t = 0.3e-9
 T_final = 1.0e-9
-delta_U_meV = 60 # 35-60 max
+delta_U_meV = 53         
 
 nbr_pts = 300
 
@@ -110,12 +110,12 @@ psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]
 coarse_nu = 50
 coarse_nt = 50
 
-TARGET_NU = 10
-TARGET_NT = 10
+TARGET_NU = 15
+TARGET_NT = 15
 
 # bornes ΔU (meV) et Δt (s)
-delta_U_vals_full = np.linspace(55, 60.0, TARGET_NU) #   change1 la ces bon je pence
-delta_t_vals_full = np.linspace(0.4e-9, T_final - t_imp, TARGET_NT) #  
+delta_U_vals_full = np.linspace(45,55, TARGET_NU)   #  change1 la ces bon je pence
+delta_t_vals_full = np.linspace(0.1e-9, 0.5e-9, TARGET_NT) #  T_final - t_imp
 
 
 
