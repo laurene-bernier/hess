@@ -60,6 +60,11 @@ print("coeur : ", MAX_WORKERS)
 ESTIMATE_RUNTIME    = False  # bench legacy désactivé
 UPSAMPLE_TO_HIGHRES = False
 
+# --- Baseline spinor: un seul Δt de référence, broadcast sur toute la grille
+BASELINE_SPINOR_SINGLE_DT = True     # True => un seul calcul ΔU=0
+BASELINE_SPINOR_DT_REF_IDX = 0       # quel index Δt utiliser comme référence
+
+
 # Affichage ETA online (faible overhead)
 SHOW_ETA            = True
 UPDATE_EVERY_S      = 1.0    # throttle des mises à jour ETA
@@ -125,8 +130,10 @@ def right_qubit_spinor_unit(psi_final, qR, eps=1e-14):
 def compute_or_load_baseline_detector_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
                                              imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     """
-    Baseline spinor du qubit droit: pour chaque Δt, on stocke qR0(Δt) = (a0[j], b0[j])
-    obtenu à ΔU = 0, déjà unitaire dans {S_R, T0_R}.
+    Baseline spinor du qubit droit. Si BASELINE_SPINOR_SINGLE_DT est True,
+    on calcule qR0(Δt_ref) à ΔU=0 une seule fois, puis on duplique (a_ref,b_ref)
+    sur tous les Δt (a0[:]=a_ref, b0[:]=b_ref).
+    Fichier: npz {a0: complex[], b0: complex[], delta_t_vals, mode, dt_ref}.
     """
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE_SPINOR):
         try:
@@ -137,10 +144,28 @@ def compute_or_load_baseline_detector_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
             pass
         print("⚠️ Baseline spinor (detector) incompatible avec la grille actuelle. Recalcul…")
 
+    if BASELINE_SPINOR_SINGLE_DT:
+        print("🧭 Calcul baseline spinor du qubit droit (ΔU=0) — mode CONSTANT sur Δt…")
+        jref = int(np.clip(BASELINE_SPINOR_DT_REF_IDX, 0, len(delta_t_vals)-1))
+        dt_ref = float(delta_t_vals[jref])
+        T_eV, U_eV = compute_txU_for_pulse(dt_ref, 0.0, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state0 = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=dt_ref, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+        a_ref, b_ref, _ = right_qubit_spinor_unit(final_state0, logical_qubits[1])
+        a0 = np.full(len(delta_t_vals), a_ref, dtype=np.complex128)
+        b0 = np.full(len(delta_t_vals), b_ref, dtype=np.complex128)
+        np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals, mode="const", dt_ref=dt_ref)
+        return a0, b0
+
+    # (mode historique: 1 spinor par Δt)
     print("🧭 Calcul baseline spinor du qubit droit (ΔU=0)…")
     a0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
     b0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
-
     for j, delta_t in enumerate(tqdm(delta_t_vals, desc="Baseline spinor Δt", unit="Δt")):
         T_eV, U_eV = compute_txU_for_pulse(delta_t, 0.0, imp_start_idx)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
@@ -153,8 +178,9 @@ def compute_or_load_baseline_detector_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
         a_u, b_u, _ = right_qubit_spinor_unit(final_state0, logical_qubits[1])
         a0[j], b0[j] = a_u, b_u
 
-    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals)
+    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals, mode="per-dt")
     return a0, b0
+
 
 def row_path_overlap(base_dir: str, i: int) -> str:
     return os.path.join(base_dir, f"p_detector_overlap_row_{i:03d}.npy")
@@ -290,6 +316,25 @@ def extract_qubit_R(final_state, logical_qubits):
     a = qR["0"].overlap(final_state)  # |S>
     b = qR["1"].overlap(final_state)  # |T0>
     return a, b
+
+def extract_qubit_R_adapted(final_state, logical_qubits):
+    """
+    Retourne (a,b) = amplitudes du qubit droit dans la base logique du moment :
+      - si UD dispo : (c_ud, c_du)
+      - sinon ST/compat : ("0","1") ou ("S","T0")
+    """
+    qR = logical_qubits[1]  # RIGHT
+    if "ud" in qR and "du" in qR:
+        a = qR["ud"].overlap(final_state)   # |↑↓>
+        b = qR["du"].overlap(final_state)   # |↓↑>
+    elif "0" in qR and "1" in qR:
+        a = qR["0"].overlap(final_state)
+        b = qR["1"].overlap(final_state)
+    else:
+        a = qR["S"].overlap(final_state)
+        b = qR["T0"].overlap(final_state)
+    return a, b
+
 
 def right_qubit_metrics(final_state, logical_qubits, eps=1e-12, normalize=True):
     """
@@ -463,7 +508,7 @@ def compute_or_load_baseline_opti(delta_t_vals, BASELINE_FILE,
         psi0_full=psi0_full, nbr_pts=nbr_pts
     )
     # ⚠️ qubit droit
-    a0, b0 = extract_qubit_R(final_state, logical_qubits)
+    a0, b0 = extract_qubit_R_adapted(final_state, logical_qubits)
     phi0_val = phase_relative(a0, b0)
     phi0 = np.full(len(delta_t_vals), phi0_val, dtype=np.float64)
 
@@ -495,7 +540,7 @@ def compute_or_load_baseline(delta_t_vals, BASELINE_FILE,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        a0, b0 = extract_qubit_R(final_state, logical_qubits)
+        a0, b0 = extract_qubit_R_adapted(final_state, logical_qubits)
         phi0[j] = phase_relative(a0, b0)
 
     np.savez(BASELINE_FILE, phi0=phi0, delta_t_vals=delta_t_vals)
@@ -541,7 +586,7 @@ def _compute_row_for_deltaU(i, delta_U_meV, delta_t_vals, phi0, base_dir,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        aR, bR = extract_qubit_R(final_state, logical_qubits)
+        aR, bR = extract_qubit_R_adapted(final_state, logical_qubits)
         dphi = wrap_pi(phase_relative(aR, bR) - phi0[j])
         prob = float(np.cos(0.5 * dphi)**2)
         fidelity_row_mm[j] = prob
@@ -576,7 +621,7 @@ def _estimate_per_line_time(delta_U_meV, delta_t_vals, phi0,
             t_imp=t_imp, Delta_t=delta_t, T_final=T_final,
             psi0_full=psi0_full, nbr_pts=nbr_pts
         )
-        aR, bR = extract_qubit_R(final_state, logical_qubits)
+        aR, bR = extract_qubit_R_adapted(final_state, logical_qubits)
         _ = np.cos(0.5 * wrap_pi(phase_relative(aR, bR) - phi0[idxs[j]]))**2
     elapsed = time.perf_counter() - start
     return elapsed * (len(delta_t_vals) / max(1, len(dt_s)))
@@ -785,6 +830,7 @@ def main_detector(delta_U_vals_full, delta_t_vals_full):
             np.save(os.path.join(data_dir, f"fidelity_detector_map_{len(delta_U_vals_full)}x{len(delta_t_vals_full)}.npy"), fidelity_map_full)
             plot_fidelity_detector_map(fidelity_map_full, delta_U_vals_full, delta_t_vals_full, psi0_label=psi0_label, out_dir=image_dir)
         else:
+            print("plot image : ")
             plot_fidelity_detector_map(fidelity_map_coarse, delta_U_vals, delta_t_vals, psi0_label=psi0_label, out_dir=image_dir)
         print("✅ Replot terminé (aucun recalcul).")
         raise SystemExit(0)

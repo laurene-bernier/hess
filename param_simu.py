@@ -7,111 +7,6 @@ from qutip_utils import all_occupations, _st_states_for_pair, _build_logical_qub
 
 import numpy as np
 
-# --- 1) rotation ST -> UD (et inverse), + check d’unitarité -----------------
-def st_to_ud(a_S, b_T0):
-    inv = 1/np.sqrt(2)
-    c_ud = inv*(a_S + b_T0)
-    c_du = inv*(-a_S + b_T0)
-    return c_ud, c_du
-
-def ud_to_st(c_ud, c_du):
-    inv = 1/np.sqrt(2)
-    a_S  = inv*(c_ud - c_du)
-    b_T0 = inv*(c_ud + c_du)
-    return a_S, b_T0
-
-def check_ud_rotation():
-    U = (1/np.sqrt(2))*np.array([[1, 1],
-                                 [-1, 1]], dtype=complex)  # (S,T0) -> (UD,DU)
-    M = U.conj().T @ U
-    print("[UD CHECK] U†U =\n", M)  # doit afficher ~[[1,0],[0,1]]
-
-# --- 2) coordonnées de Bloch depuis le spinor UD ----------------------------
-def bloch_coords_from_ud(alpha, beta):
-    # |ψ> = alpha |↑↓> + beta |↓↑>, normalisé
-    nrm = np.hypot(abs(alpha), abs(beta))
-    if nrm == 0:
-        return 0.0, 0.0, 0.0
-    a = alpha / nrm
-    b = beta  / nrm
-    x = 2*np.real(np.conj(a)*b)
-    y = 2*np.imag(np.conj(a)*b)
-    z = abs(a)**2 - abs(b)**2
-    return float(x), float(y), float(z)
-
-def relative_phase_ud(alpha, beta):
-    # φ = arg(alpha * conj(beta)) ∈ [-π, π]
-    return float(np.angle(alpha * np.conj(beta)))
-
-# --- 3) DEBUG principal : imprime tout ce qu’il faut ------------------------
-def ud_debug_print(final_state, logical_qubits, label=""):
-    inv = 1/np.sqrt(2)
-    # a) on essaie en priorité l’extracteur UD s’il existe
-    try:
-        c_ud, c_du, pop = right_qubit_spinor_ud_unit(final_state, logical_qubits)
-        src = "UD extractor"
-    except NameError:
-        # b) fallback : extraction ST puis rotation ST->UD
-        a_S, b_T0 = extract_qubit_R(final_state, logical_qubits)
-        c_ud, c_du = st_to_ud(a_S, b_T0)
-        pop = abs(c_ud)**2 + abs(c_du)**2
-        src = "ST→UD rotation"
-
-    # Normalisation douce (pour l’affichage)
-    nrm = np.hypot(abs(c_ud), abs(c_du))
-    c_ud_n = c_ud/nrm if nrm else c_ud
-    c_du_n = c_du/nrm if nrm else c_du
-
-    x, y, z = bloch_coords_from_ud(c_ud_n, c_du_n)
-    phi = relative_phase_ud(c_ud_n, c_du_n)
-
-    print(f"\n[UD DEBUG] {label} via {src}")
-    print(f"  pop_in_subspace = {pop:.6f}   (idéal ≈ 1.000000)")
-    print(f"  amplitudes (normées): c_ud={c_ud_n:.6f}   c_du={c_du_n:.6f}")
-    print(f"  probs: |c_ud|^2={abs(c_ud_n)**2:.6f}   |c_du|^2={abs(c_du_n)**2:.6f}")
-    print(f"  Bloch: x={x:.6f}   y={y:.6f}   z={z:.6f}")
-    print(f"  relative phase φ_ud = {phi:.6f} rad  (φ=arg(c_ud * conj(c_du)))")
-
-    # Comparaison ST (si extracteur ST dispo) pour valider la rotation
-    try:
-        a_S_dir, b_T0_dir = extract_qubit_R(final_state, logical_qubits)
-        a_S_rot, b_T0_rot = ud_to_st(c_ud_n, c_du_n)
-        dS  = abs(a_S_dir - a_S_rot)
-        dT0 = abs(b_T0_dir - b_T0_rot)
-        print(f"  ST check:  |⟨S|ψ⟩|^2={abs(a_S_rot)**2:.6f}  |⟨T0|ψ⟩|^2={abs(b_T0_rot)**2:.6f}")
-        print(f"  diffs vs direct ST: ΔS={dS:.3e}  ΔT0={dT0:.3e}  (attendu ~ <1e-10)")
-    except NameError:
-        pass
-
-    # Hints visuels en texte
-    if z > 0.98:
-        print("  >>> proche de |↑↓> (pôle nord)")
-    elif z < -0.98:
-        print("  >>> proche de |↓↑> (pôle sud)")
-    elif abs(x) > 0.98 and abs(z) < 0.1:
-        print("  >>> proche équateur (combinaisons ~|T0> ou ~|S>)")
-
-# --- 4) petits tests “smoke” faciles à lancer --------------------------------
-def ud_smoke_tests(st_L, st_R, ud_L=None, ud_R=None):
-    print("\n[UD SMOKE] Unitarité de la rotation ST->UD")
-    check_ud_rotation()
-
-    # Vérifie que tes états UD (si construits via Option B) sont orthonormés
-    if ud_L is not None:
-        u, d = ud_L["ud"], ud_L["du"]
-        o = (u.dag()*d).full()[0,0]
-        print(f"[UD SMOKE] gauche: <ud|du>={o:.3e}   ||ud||={u.norm():.6f}   ||du||={d.norm():.6f}")
-    if ud_R is not None:
-        u, d = ud_R["ud"], ud_R["du"]
-        o = (u.dag()*d).full()[0,0]
-        print(f"[UD SMOKE] droite: <ud|du>={o:.3e}   ||ud||={u.norm():.6f}   ||du||={d.norm():.6f}")
-
-    # Sanity: reconstruire ST depuis UD pur
-    a_S, b_T0 = ud_to_st(1.0+0j, 0.0+0j)  # |↑↓>
-    print(f"[UD SMOKE] |↑↓> → ST : |S|^2={abs(a_S)**2:.3f}, |T0|^2={abs(b_T0)**2:.3f} (attendu 0.5/0.5)")
-    a_S, b_T0 = ud_to_st(0.0+0j, 1.0+0j)  # |↓↑>
-    print(f"[UD SMOKE] |↓↑> → ST : |S|^2={abs(a_S)**2:.3f}, |T0|^2={abs(b_T0)**2:.3f} (attendu 0.5/0.5)")
-
 
 # =============================== Matériau / système ===============================
 num_sites   = 4
@@ -152,31 +47,6 @@ def build_adaptive_x_grid(dot_x, sigma_x_m, well_width_nm, barrier_widths_nm,
     x = np.linspace(dot_x.min()-span_sigma*sigma_x_m,
                     dot_x.max()+span_sigma*sigma_x_m, Nx)
     return x
-
-
-# Helper: construit l'état d'une paire (st = st_L ou st_R)
-def spin_pair(st, psi0_label, triplet_kind="T0"):
-    if psi0_label in ("s", "singlet"):     return st["S"].unit()
-    if psi0_label in ("t0", "triplet0"):   return st["T0"].unit()
-    if psi0_label in ("t+", "uu", "upup"): return st["T+"].unit()   # |↑↑>
-    if psi0_label in ("t-", "dd", "downdown"): return st["T-"].unit() # |↓↓>
-    if psi0_label in ("ud", "updown"):     return (st["T0"] + st["S"]).unit()  # |↑↓>
-    if psi0_label in ("du", "downup"):     return (st["T0"] - st["S"]).unit()  # |↓↑>
-    if psi0_label in ("t", "triplet"):     return st[triplet_kind].unit()      # par défaut T0
-    raise ValueError(f"psi0_label inconnu: {psi0_label}")
-
-# --- Tes 8 scénarios (interprétation 'gauche–droite') ---
-# NB: triplet = T0 par défaut; change triplet_kind="T+" ou "T-" si besoin.
-cases = {
-    "up-up":            ("uu", "uu"),          # L=|↑↑>, R=|↑↑>
-    "down-down":        ("dd", "dd"),          # L=|↓↓>, R=|↓↓>
-    "up-down":          ("uu", "dd"),          # L=|↑↑>, R=|↓↓>
-    "down-up":          ("dd", "uu"),          # L=|↓↓>, R=|↑↑>
-    "singlet-triplet":  ("singlet", "triplet"),# L=S,    R=T0 (par défaut)
-    "singlet-singlet":  ("singlet", "singlet"),# L=S,    R=S
-    "triplet-triplet":  ("triplet", "triplet"),# L=T0,   R=T0 (par défaut)
-    "triplet-singlet":  ("triplet", "singlet") # L=T0,   R=S
-}
 
 
 num_sites   = 4
@@ -263,7 +133,7 @@ sigma_y = sigma_y_eff
 t_imp   = 0.1e-9
 Delta_t = 1.2e-9
 T_final = 2.0e-9
-delta_U_meV = 40
+delta_U_meV = 55
 
 N_time    = 300
 time_array = np.linspace(0.0, T_final, N_time)
@@ -278,20 +148,30 @@ st_R            = _st_states_for_pair(basis_occ, (2,3))
 ud_L = _ud_states_for_pair_from_st(st_L)
 ud_R = _ud_states_for_pair_from_st(st_R)
 
-ud_smoke_tests(st_L, st_R, ud_L=ud_L, ud_R=ud_R)
-
-logical_qubits  = _build_logical_qubits(num_sites, basis_occ)
-
-# Heatmap (exemples; tes scripts map_* règlent leurs grilles finement de leur côté)
+LOGICAL_BASIS = "st"  # ou "st" ud
 psi0_label = "singlet-triplet"
-#init_sig = [st_L["S"], st_R["T0"]] # change1 et normalement cest bon si mais bon 
-psi0 = [st_L["S"].unit(), -st_R["T0"].unit()]
-#psi0 = [ud_L["ud"].unit(), -ud_R["ud"].unit()]
 
+if psi0_label == "up-down":
+    psi0 = [ud_L["ud"].unit(),  ud_R["ud"].unit()]   # |↑↓>, |↑↓>
+else:
+    psi0 = [st_L["S"].unit(),   st_R["T0"].unit()]   # |S>, |T0>
+
+
+if LOGICAL_BASIS == "up":
+    logical_qubits = {
+        "L": {"ud": ud_L["ud"], "du": ud_L["du"]},
+        "R": {"ud": ud_R["ud"], "du": ud_R["du"]},
+    }
+else:
+    # fallback ST (comme aujourd'hui)
+    logical_qubits  = _build_logical_qubits(num_sites, basis_occ)
+print(f"[info] logical basis = {LOGICAL_BASIS}")
+
+nbr_pts = 300
 
 coarse_nu  = 50
 coarse_nt  = 50
-TARGET_NU  = 10
-TARGET_NT  = 10
-delta_U_vals_full = np.linspace(35, 60, TARGET_NU)
+TARGET_NU  = 5
+TARGET_NT  = 5
+delta_U_vals_full = np.linspace(50, 60, TARGET_NU)
 delta_t_vals_full = np.linspace(t_imp, T_final - t_imp, TARGET_NT)

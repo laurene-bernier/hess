@@ -49,7 +49,8 @@ from param_simu import (
     well_depths_meV, well_width_nm, barrier_widths_nm,
     a_meV_nm2, dot_x, sigma_x, sigma_y,
     time_array, idx_t_imp, x, y, m_eff,
-    nbr_pts, basis_occ, logical_qubits, nbr_pts, psi0_label, st_L, st_R, num_sites, psi0)
+    nbr_pts, basis_occ, logical_qubits,psi0_label, st_L, st_R, num_sites, psi0,
+    LOGICAL_BASIS)
 
 # =================== Réglages spécifiques "qubit gauche" ===================
 ROW_BASENAME        = "p_nochange_row"   # fichiers p_nochange_row_###.npy
@@ -64,6 +65,10 @@ UPSAMPLE_TO_HIGHRES = False
 # Affichage ETA online (faible overhead)
 SHOW_ETA            = True
 UPDATE_EVERY_S      = 1.0    # throttle des mises à jour ETA
+
+# --- Baseline spinor: un seul Δt de référence, broadcast sur toute la grille
+BASELINE_SPINOR_SINGLE_DT = True
+BASELINE_SPINOR_DT_REF_IDX = 0
 
 # --- Globals visibles dans les sous-processus ---
 SE_OPTS = {"rtol": 1e-6, "atol": 1e-8 }#, "nsteps": 10000}  # défaut safe
@@ -149,12 +154,39 @@ def build_qubit_overlap_rows(delta_U_vals, delta_t_vals, a0, b0, base_dir,
                                                   imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts)
             gc.collect()
 
+def project_logical_normed(psi_final, q):
+    """
+    Projette l'état sur la base logique disponible dans q (UD ou ST),
+    et renvoie (a, b) **normalisés par la norme des kets de base**.
+    Priorité: UD ('ud','du') > générique ('0','1') > ST ('S','T0').
+    """
+    # 1) détecte les clés
+    if ("ud" in q) and ("du" in q):
+        k0, k1, basis = "ud", "du", "UD"
+    elif ("0" in q) and ("1" in q):
+        k0, k1, basis = "0", "1", "GEN"
+    else:
+        k0, k1, basis = "S", "T0", "ST"  # fallback
+
+    # 2) amplitudes + normalisation par la norme des kets (au cas où ≠1)
+    a = q[k0].overlap(psi_final)
+    b = q[k1].overlap(psi_final)
+    n0 = (q[k0].overlap(q[k0]).real)**0.5
+    n1 = (q[k1].overlap(q[k1]).real)**0.5
+    n0 = 1.0 if n0 == 0 else n0
+    n1 = 1.0 if n1 == 0 else n1
+    return a / n0, b / n1, basis
+
+
 def qubit_L_spinor_unit(psi_final, qL, eps=1e-14):
     """
     Spinor du qubit gauche dans la base { |S>, |T0> }, renormalisé dans ce sous-espace.
     Retourne (a_u, b_u, pop_ST0) où pop_ST0 = |a|^2+|b|^2 AVANT renormalisation.
     """
-    a, b = project_ST0_normed(psi_final, qL)     # amplitudes dans la base orthonormée (Ŝ, T̂0)
+    if LOGICAL_BASIS == "ud":
+        a, b, _ = project_logical_normed(psi_final, qL)
+    else:
+        a, b = project_ST0_normed(psi_final, qL)     # amplitudes dans la base orthonormée (Ŝ, T̂0)
     pop = (abs(a)**2 + abs(b)**2)
     if pop <= eps:
         # fuite quasi-totale hors {S,T0} → probas d’overlap peu fiables
@@ -206,8 +238,8 @@ def plot_qubit_overlap_map(p_map, U_vals, T_vals, psi0_label=None, out_dir=None)
 def compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
                                           imp_start_idx, num_sites, n_electrons, H_base, psi0_full, basis_occ, logical_qubits, nbr_pts):
     """
-    Baseline qubit: stocke pour chaque Δt le spinor unitaire (a0[j], b0[j]) à ΔU=0.
-    Fichier: npz {a0: complex[], b0: complex[], delta_t_vals}.
+    Baseline qubit gauche. En mode SINGLE_DT, on calcule qL0(Δt_ref) à ΔU=0 une seule fois
+    et on duplique (a_ref,b_ref) sur tous les Δt.
     """
     if (not FORCE_RECALC) and os.path.exists(BASELINE_FILE_SPINOR):
         try:
@@ -218,10 +250,28 @@ def compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
             pass
         print("⚠️ Baseline spinor qubit incompatible avec la grille actuelle. Recalcul…")
 
+    if BASELINE_SPINOR_SINGLE_DT:
+        print("🧭 Calcul baseline spinor qubit gauche (ΔU=0) — mode CONSTANT sur Δt…")
+        jref = int(np.clip(BASELINE_SPINOR_DT_REF_IDX, 0, len(delta_t_vals)-1))
+        dt_ref = float(delta_t_vals[jref])
+        T_eV, U_eV = compute_txU_for_pulse(dt_ref, 0.0, imp_start_idx)
+        H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
+        final_state0 = qubits_impulsion_lastonly(
+            num_sites=num_sites, n_electrons=n_electrons,
+            H_base=H_base, H_pulse=H_pulse,
+            t_imp=t_imp, Delta_t=dt_ref, T_final=T_final,
+            psi0_full=psi0_full, nbr_pts=nbr_pts
+        )
+        a_ref, b_ref, _ = qubit_L_spinor_unit(final_state0, logical_qubits[0])
+        a0 = np.full(len(delta_t_vals), a_ref, dtype=np.complex128)
+        b0 = np.full(len(delta_t_vals), b_ref, dtype=np.complex128)
+        np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals, mode="const", dt_ref=dt_ref)
+        return a0, b0
+
+    # (mode historique: 1 spinor par Δt)
     print("🧭 Calcul baseline spinor qubit gauche (ΔU=0)…")
     a0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
     b0 = np.zeros(len(delta_t_vals), dtype=np.complex128)
-
     for j, delta_t in enumerate(tqdm(delta_t_vals, desc="Baseline qubit Δt", unit="Δt")):
         T_eV, U_eV = compute_txU_for_pulse(delta_t, 0.0, imp_start_idx)
         H_pulse = build_spinful_hubbard_hamiltonian(num_sites, T_eV, U_eV, basis_occ)
@@ -234,8 +284,9 @@ def compute_or_load_baseline_qubit_spinor(delta_t_vals, BASELINE_FILE_SPINOR,
         a_u, b_u, _ = qubit_L_spinor_unit(final_state0, logical_qubits[0])
         a0[j], b0[j] = a_u, b_u
 
-    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals)
+    np.savez(BASELINE_FILE_SPINOR, a0=a0, b0=b0, delta_t_vals=delta_t_vals, mode="per-dt")
     return a0, b0
+
 
 # ========================= Utilitaires ===========================
 def _slug(s: str) -> str:

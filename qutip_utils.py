@@ -695,7 +695,20 @@ def qubits_impulsion(num_sites, n_electrons,
 
     Nq = num_sites//2
     basis_occ = all_occupations(num_sites, n_electrons)
-    logical_qubits = _build_logical_qubits(num_sites, basis_occ)
+
+    # juste après basis_occ = all_occupations(...)
+    try:
+        from param_simu import LOGICAL_BASIS, ud_L, ud_R
+        if LOGICAL_BASIS == "ud":
+            logical_qubits = [
+                {"0": ud_L["ud"], "1": ud_L["du"]},   # qubit gauche : |0>=|↑↓>, |1>=|↓↑>
+                {"0": ud_R["ud"], "1": ud_R["du"]},   # qubit droit  : |0>=|↑↓>, |1>=|↓↑>
+            ]
+        else:
+            logical_qubits = _build_logical_qubits(num_sites, basis_occ)  # ST
+    except Exception:
+        logical_qubits = _build_logical_qubits(num_sites, basis_occ)      # ST fallback
+
 
     # --- deux Hamiltoniens “figés” ------------------------------------
     H_base  = build_spinful_hubbard_hamiltonian(num_sites, t_base,  U_base,  basis_occ)
@@ -774,6 +787,19 @@ def qubits_impulsion(num_sites, n_electrons,
             b.xlabel = ['$x$', '']
             b.ylabel = ['$y$', '']
             b.zlabel = ['$|1⟩$', '$|0⟩$']
+            # -----------------------------------------------------------------------------------------------------------------------------
+            try:
+                from param_simu import LOGICAL_BASIS
+            except Exception:
+                LOGICAL_BASIS = "st"
+
+            if LOGICAL_BASIS == "ud":
+                b.zlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
+                b.xlabel = [r"$|T_0\rangle$", r"$|S\rangle$"]
+            else:
+                b.zlabel = [r"$|S\rangle$", r"$|T_0\rangle$"]
+                b.xlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
+            #----------------------------------------------------------------------------------------------------------------------------------
             b.render()
             ax.set_title('Qubit' if idx == 0 else 'Detector')
         plt.tight_layout()
@@ -886,7 +912,17 @@ def qubit_impurities(num_sites, n_electrons,
         Fréquence de changement du spin impurité (GHz). Par défaut 1 GHz.
     """
     basis_occ = all_occupations(num_sites, n_electrons)
-    logical_qubits = _build_logical_qubits(num_sites, basis_occ)
+    from param_simu import LOGICAL_BASIS, ud_L, ud_R
+    if LOGICAL_BASIS == "ud":
+        logical_qubits = {
+                "L": {"ud": ud_L["ud"], "du": ud_L["du"]},
+                "R": {"ud": ud_R["ud"], "du": ud_R["du"]},
+            }
+    else:
+        # fallback ST (comme aujourd'hui)
+        logical_qubits  = _build_logical_qubits(num_sites, basis_occ)
+    print(f"[info] logical basis = {LOGICAL_BASIS}")
+
     Nq = len(logical_qubits)
 
     # Impureté : spin seul aléatoire si nécessaire
