@@ -148,11 +148,12 @@ st_R            = _st_states_for_pair(basis_occ, (2,3))
 ud_L = _ud_states_for_pair_from_st(st_L)
 ud_R = _ud_states_for_pair_from_st(st_R)
 
-LOGICAL_BASIS = "st"  # ou "st" ud
-psi0_label = "singlet-singlet"
+LOGICAL_BASIS = "ud"  # ou "st" ud
+psi0_label = "down-up"
 
 
-psi0 = [st_L["S"].unit(),   st_R["S"].unit()]   # |S>, |T0>
+#psi0 = [st_L["S"].unit(),   st_R["S"].unit()]   # |S>, |T0>
+psi0 = [ud_L["du"].unit(), ud_R["du"].unit()]
 
 
 if LOGICAL_BASIS == "ud":

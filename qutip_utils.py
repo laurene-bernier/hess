@@ -794,11 +794,11 @@ def qubits_impulsion(num_sites, n_electrons,
                 LOGICAL_BASIS = "st"
 
             if LOGICAL_BASIS == "ud":
-                b.zlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
+                b.zlabel = [r"$|\downarrow\uparrow\rangle$", r"$|\uparrow\downarrow\rangle$"]
                 b.xlabel = [r"$|T_0\rangle$", r"$|S\rangle$"]
             else:
                 b.zlabel = [r"$|T_0\rangle$", r"$|S\rangle$"]
-                b.xlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
+                b.xlabel = [r"$|\downarrow\uparrow\rangle$", r"$|\uparrow\downarrow\rangle$"]
             #----------------------------------------------------------------------------------------------------------------------------------
             b.render()
             ax.set_title('Qubit' if idx == 0 else 'Detector')
