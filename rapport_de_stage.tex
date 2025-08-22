@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{float} % dans le préambule
+\usepackage[a4paper, margin=2cm]{geometry}
+\usepackage{titlesec}
+\usepackage[font=small,labelfont=bf]{caption} % ou footnotesize, scriptsize, etc.
+
+
+% Taille et style du titre de section
+\titleformat{\section}
+  {\normalfont\large\bfseries}   % format du texte (ici large au lieu de Large)
+  {\thesection}                  % numéro
+  {1em}                          % espacement numéro-texte
+  {}                             % code avant le titre
+
+\titleformat{\subsection}[block]
+  {\centering\normalfont\normalsize\bfseries} % centré
+  {} % pas de numéro
+  {0pt}
+  {}
+
+
+\title{Rapport}
+
+\begin{document}
+
+\maketitle
+
+\section*{Configuration singlet-triplet :}
+
+\begin{figure}[H]
+    \centering
+    % Première image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/p_nochange_map_qubit_singlet-triplet_20250813-194359.png}
+        \caption{Carte de fidélité de la phase du détecteur}
+        \label{fig:fidelity_map_1}
+    \end{minipage}
+    \hfill
+    % Deuxième image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/fidelity_map_detector_singlet-triplet_20250813-192351.png}
+        \caption{Carte de fidélité de la phase du Qubit}
+        \label{fig:fidelity_map_2}
+    \end{minipage}
+    \centering
+    \includegraphics[width=0.6\textwidth]{rapport_de_stage_image/score_map__singlet-triplet_20250814-115535.png}
+    \caption{Probabilité d'une détection idéal}
+    \label{fig:fidelity_map_detector}
+\end{figure}
+
+
+\section*{Configuration triplet-singlet :}
+
+\begin{figure}[H]
+    \centering
+    % Première image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/p_nochange_map_qubit_triplet-singlet_20250813-194500.png}
+        \caption{Carte de fidélité de la phase du détecteur}
+        \label{fig:fidelity_map_1}
+    \end{minipage}
+    \hfill
+    % Deuxième image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/fidelity_map_detector_triplet-singlet_20250813-193131.png}
+        \caption{Carte de fidélité de la phase du Qubit}
+        \label{fig:fidelity_map_2}
+    \end{minipage}
+    
+    \centering
+    \includegraphics[width=0.6\textwidth]{rapport_de_stage_image/score_map__triplet-singlet_20250814-115310.png}
+    \caption{Probabilité d'une détection idéal}
+    \label{fig:fidelity_map_detector}
+\end{figure}
+
+\section*{Configuration singlet-singlet :}
+
+\begin{figure}[H]
+    \centering
+    % Première image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/p_nochange_map_qubit_singlet-singlet_20250814-123925.png}
+        \caption{Carte de fidélité de la phase du détecteur}
+        \label{fig:fidelity_map_1}
+    \end{minipage}
+    \hfill
+    % Deuxième image
+    \begin{minipage}[c]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{rapport_de_stage_image/fidelity_map_detector_singlet-singlet_20250814-122546.png}
+        \caption{Carte de fidélité de la phase du Qubit}
+        \label{fig:fidelity_map_2}
+    \end{minipage}
+    
+    \centering
+    \includegraphics[width=0.6\textwidth]{rapport_de_stage_image/score_map__singlet-singlet_20250814-124416.png}
+    \caption{Probabilité d'une détection idéal}
+    \label{fig:fidelity_map_detector}
+\end{figure}
+
+
+
+
+
+
+
+
+\end{document}

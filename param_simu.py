@@ -17,21 +17,21 @@ m_eff = 0.067 * sc.m_e
 dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
 
 # ============================ Potentiel 1D (x) par défaut =========================
-# a_meV_nm2 = 6.5e-3
-# well_depths_meV     = (30, 5, 5, 30)
-# barrier_heights_meV = (35, 75, 35)
-# well_width_nm       = 23
-# barrier_widths_nm   = (15, 30, 25)  # (15, 30, 15 + asym_barrier_width) auparavant
+a_meV_nm2 = 6.5e-3
+well_depths_meV     = (30, 5, 5, 40)
+barrier_heights_meV = (35, 90, 50)
+well_width_nm       = 23
+barrier_widths_nm   = (15, 30, 25)  # (15, 30, 15 + asym_barrier_width) auparavant
 
 # asym_well_depths = 10
 # asym_barrier_width = 10
 # asym_barrier_height = 15
 
-a_meV_nm2 = 6.5e-3
-well_depths_meV     = (30, 5, 20, 40)
-barrier_heights_meV = (35, 80, 60)
-well_width_nm       = 23
-barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
+# a_meV_nm2 = 6.5e-3
+# well_depths_meV     = (30, 5, 20, 40)
+# barrier_heights_meV = (35, 80, 60)
+# well_width_nm       = 23
+# barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
 # ========================= Grille adaptative en x (comme avant) ===================
 def build_adaptive_x_grid(dot_x, sigma_x_m, well_width_nm, barrier_widths_nm,
                           safety_pts=14, span_sigma=5):
@@ -63,13 +63,18 @@ asym_well_depths = 10
 asym_barrier_width = 10
 asym_barrier_height = 15
 # Global conf for potentials
-a_meV_nm2 = 6.5e-3
-well_depths_meV = (30, 5, 5, 30 + asym_well_depths)
-barrier_heights_meV = (35, 90, 35 + asym_barrier_height)
-well_width_nm = 23
-barrier_widths_nm = (15, 30, 15 + asym_barrier_width)
+# a_meV_nm2 = 6.5e-3
+# well_depths_meV = (30, 5, 5, 40)
+# barrier_heights_meV = (35, 90, 50)
+# well_width_nm = 23
+# barrier_widths_nm = (15, 30, 25)
 
 
+# a_meV_nm2 = 6.5e-3
+# well_depths_meV = (30, 5, 5, 35)
+# barrier_heights_meV = (35, 90, 35)
+# well_width_nm = 23
+# barrier_widths_nm = (15, 30, 15)
 
 # géo heatmap :
 sigma_x = 15e-9
@@ -131,9 +136,9 @@ sigma_y = sigma_y_eff
 
 # =============================== Temps par défaut ================================
 t_imp   = 0.1e-9
-Delta_t = 0.8e-9
+Delta_t = 1.6e-9
 T_final = 2.0e-9
-delta_U_meV = 20
+delta_U_meV = 57
 
 N_time    = 300
 time_array = np.linspace(0.0, T_final, N_time)
@@ -148,12 +153,12 @@ st_R            = _st_states_for_pair(basis_occ, (2,3))
 ud_L = _ud_states_for_pair_from_st(st_L)
 ud_R = _ud_states_for_pair_from_st(st_R)
 
-LOGICAL_BASIS = "ud"  # ou "st" ud
-psi0_label = "down-up"
+LOGICAL_BASIS = "st"  # ou "st" ud
+psi0_label = "singlet-triplet"
 
 
-#psi0 = [st_L["S"].unit(),   st_R["S"].unit()]   # |S>, |T0>
-psi0 = [ud_L["du"].unit(), ud_R["du"].unit()]
+psi0 = [st_L["S"].unit(),   -st_R["T0"].unit()]   # |S>, |T0>
+#psi0 = [ud_L["ud"].unit(), ud_R["du"].unit()]
 
 
 if LOGICAL_BASIS == "ud":
