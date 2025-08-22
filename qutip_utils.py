@@ -758,17 +758,6 @@ def qubits_impulsion(num_sites, n_electrons,
         nrows = int(np.ceil(Nq / ncols))
         fig = plt.figure(figsize=(4 * ncols, 4 * nrows))
 
-        # save attempt
-        # # sauvegarde propre
-        # import os
-        # from param_simu import delta_U_meV
-        # out_dir = "sphere_bloch"
-        # os.makedirs(out_dir, exist_ok=True)
-        # fname = f"spheres_dU_{float(delta_U_meV):.3f}meV_dT_{float(Delta_t)*1e9:.3f}ns.png"
-        # out_path = os.path.join(out_dir, fname)
-        # fig.savefig(out_path, dpi=300, bbox_inches="tight")
-        # print("🖼️ Image sauvegardée :", out_path)
-
         for idx, coords in enumerate(coords_list):
             if coords.shape[0] != pulse_mask.shape[0]:
                 print(f"[WARN] Coordonnées du qubit {idx} incompatibles avec la grille temporelle. Ignoré.")

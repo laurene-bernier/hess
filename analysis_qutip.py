@@ -463,21 +463,3 @@ if __name__=="__main__":
     print(f"  verdict: {verdict(J_R_base, (hbar*dphiR_free/dt_free) if dt_free>0 else 0.0)}   (z_end={zRe:+.3f} → z_last={zRl:+.3f})")
     # ===========================================================================
 
-
-    # fig = plt.gcf() 
-    # out_dir = "sphere_bloch"
-    # os.makedirs(out_dir, exist_ok=True)
-
-    # # nom: commence par "spheres" + valeurs ΔU et Δt
-    # # delta_U_meV vient de param_simu ; Delta_t est en secondes → on l'affiche en ns
-    # fname = f"spheres_dU_{float(delta_U_meV):.3f}meV_dT_{float(Delta_t)*1e9:.3f}ns.png"
-    # out_path = os.path.join(out_dir, fname)
-
-    # if fig is not None:
-    #     fig.savefig(out_path, dpi=300, bbox_inches="tight")
-    # else:
-    #     # si jamais aucune figure n'est trouvée, tente un save direct
-    #     plt.savefig(out_path, dpi=300, bbox_inches="tight")
-
-    # print(f"🖼️ Image des sphères de Bloch enregistrée : {out_path}")
-
