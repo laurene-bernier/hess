@@ -797,7 +797,7 @@ def qubits_impulsion(num_sites, n_electrons,
                 b.zlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
                 b.xlabel = [r"$|T_0\rangle$", r"$|S\rangle$"]
             else:
-                b.zlabel = [r"$|S\rangle$", r"$|T_0\rangle$"]
+                b.zlabel = [r"$|T_0\rangle$", r"$|S\rangle$"]
                 b.xlabel = [r"$|\uparrow\downarrow\rangle$", r"$|\downarrow\uparrow\rangle$"]
             #----------------------------------------------------------------------------------------------------------------------------------
             b.render()

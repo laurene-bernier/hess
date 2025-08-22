@@ -131,9 +131,9 @@ sigma_y = sigma_y_eff
 
 # =============================== Temps par défaut ================================
 t_imp   = 0.1e-9
-Delta_t = 1.2e-9
+Delta_t = 0.8e-9
 T_final = 2.0e-9
-delta_U_meV = 55
+delta_U_meV = 20
 
 N_time    = 300
 time_array = np.linspace(0.0, T_final, N_time)
@@ -149,15 +149,13 @@ ud_L = _ud_states_for_pair_from_st(st_L)
 ud_R = _ud_states_for_pair_from_st(st_R)
 
 LOGICAL_BASIS = "st"  # ou "st" ud
-psi0_label = "singlet-triplet"
-
-if psi0_label == "up-down":
-    psi0 = [ud_L["ud"].unit(),  ud_R["ud"].unit()]   # |↑↓>, |↑↓>
-else:
-    psi0 = [st_L["S"].unit(),   st_R["T0"].unit()]   # |S>, |T0>
+psi0_label = "singlet-singlet"
 
 
-if LOGICAL_BASIS == "up":
+psi0 = [st_L["S"].unit(),   st_R["S"].unit()]   # |S>, |T0>
+
+
+if LOGICAL_BASIS == "ud":
     logical_qubits = {
         "L": {"ud": ud_L["ud"], "du": ud_L["du"]},
         "R": {"ud": ud_R["ud"], "du": ud_R["du"]},
@@ -171,7 +169,7 @@ nbr_pts = 300
 
 coarse_nu  = 50
 coarse_nt  = 50
-TARGET_NU  = 5
-TARGET_NT  = 5
-delta_U_vals_full = np.linspace(50, 60, TARGET_NU)
+TARGET_NU  = 33
+TARGET_NT  = 33
+delta_U_vals_full = np.linspace(40, 60, TARGET_NU)
 delta_t_vals_full = np.linspace(t_imp, T_final - t_imp, TARGET_NT)
