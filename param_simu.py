@@ -18,10 +18,10 @@ dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
 
 # ============================ Potentiel 1D (x) par défaut =========================
 a_meV_nm2 = 6.5e-3
-well_depths_meV     = (30, 5, 5, 40)
-barrier_heights_meV = (35, 90, 50)
+well_depths_meV     = (30, 5, 20, 40)
+barrier_heights_meV = (35, 80, 60)
 well_width_nm       = 23
-barrier_widths_nm   = (15, 30, 25)  # (15, 30, 15 + asym_barrier_width) auparavant
+barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
 
 # asym_well_depths = 10
 # asym_barrier_width = 10
@@ -140,7 +140,10 @@ Delta_t = 1.6e-9
 T_final = 2.0e-9
 delta_U_meV = 57
 
+
+
 N_time    = 300
+
 time_array = np.linspace(0.0, T_final, N_time)
 idx_t_imp     = np.searchsorted(time_array, t_imp)
 idx_t_imp_end = np.searchsorted(time_array, t_imp + Delta_t)
@@ -154,10 +157,10 @@ ud_L = _ud_states_for_pair_from_st(st_L)
 ud_R = _ud_states_for_pair_from_st(st_R)
 
 LOGICAL_BASIS = "st"  # ou "st" ud
-psi0_label = "singlet-triplet"
+psi0_label = "singlet-singlet"
 
 
-psi0 = [st_L["S"].unit(),   -st_R["T0"].unit()]   # |S>, |T0>
+psi0 = [st_L["S"].unit(),   -st_R["S"].unit()]   # |S>, |T0>
 #psi0 = [ud_L["ud"].unit(), ud_R["du"].unit()]
 
 
@@ -175,7 +178,7 @@ nbr_pts = 300
 
 coarse_nu  = 50
 coarse_nt  = 50
-TARGET_NU  = 33
-TARGET_NT  = 33
-delta_U_vals_full = np.linspace(40, 60, TARGET_NU)
+TARGET_NU  = 15
+TARGET_NT  = 15
+delta_U_vals_full = np.linspace(0, 60, TARGET_NU)
 delta_t_vals_full = np.linspace(t_imp, T_final - t_imp, TARGET_NT)
