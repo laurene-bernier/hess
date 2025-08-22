@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.8.22)  22 AUG 2025 17:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.8.22)  22 AUG 2025 19:00
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -301,8 +301,7 @@ Package: color 2022/01/06 v1.3d Standard LaTeX Color (DPC)
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package color Info: Driver file: pdftex.def on input line 149.
- (C:\Users\lrnbe\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx))
-No file rapport_de_stage.aux.
+ (C:\Users\lrnbe\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)) (rapport_de_stage.aux)
 \openout1 = `rapport_de_stage.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
@@ -319,7 +318,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
 LaTeX Font Info:    ... okay on input line 31.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
 LaTeX Font Info:    ... okay on input line 31.
-(C:\Users\lrnbe\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
+ (C:\Users\lrnbe\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count302
 \scratchdimen=\dimen198
@@ -410,23 +409,24 @@ File: rapport_image_divers/pdt_impulsion_bon.png Graphic file (type png)
 <use rapport_image_divers/pdt_impulsion_bon.png>
 Package pdftex.def Info: rapport_image_divers/pdt_impulsion_bon.png  used on input line 49.
 (pdftex.def)             Requested size: 232.17242pt x 138.5045pt.
-<qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png, id=4, 547.44525pt x 427.8384pt>
-File: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png Graphic file (type png)
-<use qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png>
-Package pdftex.def Info: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png  used on input line 63.
-(pdftex.def)             Requested size: 145.11053pt x 113.40274pt.
-<qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png, id=5, 547.0839pt x 427.8384pt>
-File: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png Graphic file (type png)
-<use qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png>
-Package pdftex.def Info: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png  used on input line 69.
-(pdftex.def)             Requested size: 145.11053pt x 113.48108pt.
 [1
 
-{C:/Users/lrnbe/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./rapport_image_divers/hors_impulsion_bon.png> <./rapport_image_divers/pdt_impulsion_bon.png> <./qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png> <./qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png>] [2]
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+{C:/Users/lrnbe/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./rapport_image_divers/hors_impulsion_bon.png> <./rapport_image_divers/pdt_impulsion_bon.png>]
+<qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png, id=24, 547.44525pt x 427.8384pt>
+File: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png Graphic file (type png)
+<use qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png>
+Package pdftex.def Info: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png  used on input line 134.
+(pdftex.def)             Requested size: 145.11053pt x 113.40274pt.
+<qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png, id=25, 547.0839pt x 427.8384pt>
+File: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png Graphic file (type png)
+<use qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png>
+Package pdftex.def Info: qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png  used on input line 140.
+(pdftex.def)             Requested size: 145.11053pt x 113.48108pt.
+ [2 <./qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png> <./qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png>]
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -434,10 +434,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...lt } & 20 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -446,12 +446,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Package siunitx Error: Invalid number '(15,40,30)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Package siunitx Error: Invalid number '(15,40,30)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 
 The input '(15,40,30)' could not be parsed as a number following the format
@@ -460,20 +460,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -481,10 +481,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -492,10 +492,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...lt } & 20 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -504,12 +504,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Package siunitx Error: Invalid number '(15,40,30)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Package siunitx Error: Invalid number '(15,40,30)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 
 The input '(15,40,30)' could not be parsed as a number following the format
@@ -518,20 +518,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -539,10 +539,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -550,10 +550,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Undefined control sequence.
 <inserted text> ...lt } & 20 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -562,12 +562,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Package siunitx Error: Invalid number '(15,40,30)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Package siunitx Error: Invalid number '(15,40,30)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 
 The input '(15,40,30)' could not be parsed as a number following the format
@@ -576,20 +576,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:222: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:223: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.222   \end{tabularx}
+l.223   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -600,17 +600,45 @@ my insertion and my current dilemma will both disappear.
 <rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png, id=36, 548.89066pt x 424.2249pt>
 File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
 <use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
-Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 234.
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 235.
 (pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
 File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
 <use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
-Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 240.
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 241.
 (pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
 [3]
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
+<use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 253.
+(pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
+File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
+<use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 259.
+(pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
+<qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png, id=40, 559.00845pt x 424.2249pt>
+File: qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png Graphic file (type png)
+<use qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png>
+Package pdftex.def Info: qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png  used on input line 271.
+(pdftex.def)             Requested size: 232.17242pt x 176.19244pt.
+<detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png, id=41, 559.00845pt x 424.2249pt>
+File: detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png Graphic file (type png)
+<use detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png>
+Package pdftex.def Info: detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png  used on input line 277.
+(pdftex.def)             Requested size: 232.17242pt x 176.19244pt.
+ [4 <./rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>]
+File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
+<use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 289.
+(pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
+File: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png Graphic file (type png)
+<use rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png  used on input line 295.
+(pdftex.def)             Requested size: 232.17242pt x 179.44197pt.
+
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -618,10 +646,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -630,12 +658,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -644,20 +672,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -665,10 +693,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -676,10 +704,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -688,12 +716,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -702,20 +730,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -723,10 +751,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 2\ieme 
                                                   {} puit \\ Puit 2 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -734,10 +762,10 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Undefined control sequence.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Undefined control sequence.
 <inserted text> ...olt } & 5 & Énergie du 3\ieme 
                                                   {} puit \\ Puit 3 & \si {\...
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -746,12 +774,12 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -760,20 +788,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:285: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:336: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.285   \end{tabularx}
+l.336   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -781,27 +809,27 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-<rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png, id=40, 560.45386pt x 424.2249pt>
+<rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png, id=46, 560.45386pt x 424.2249pt>
 File: rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png Graphic file (type png)
 <use rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png>
-Package pdftex.def Info: rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png  used on input line 293.
+Package pdftex.def Info: rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png  used on input line 344.
 (pdftex.def)             Requested size: 232.17242pt x 175.73933pt.
-<rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png, id=41, 560.45386pt x 424.2249pt>
+<rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png, id=47, 560.45386pt x 424.2249pt>
 File: rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png Graphic file (type png)
 <use rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png>
-Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png  used on input line 299.
+Package pdftex.def Info: rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png  used on input line 350.
 (pdftex.def)             Requested size: 232.17242pt x 175.73933pt.
-[4 <./rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png>]
-<rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png, id=46, 560.0925pt x 291.2481pt>
+[5 <./qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png> <./detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png>]
+<rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png, id=53, 560.0925pt x 291.2481pt>
 File: rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png Graphic file (type png)
 <use rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png>
-Package pdftex.def Info: rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png  used on input line 309.
+Package pdftex.def Info: rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png  used on input line 360.
 (pdftex.def)             Requested size: 290.22107pt x 150.92102pt.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing $ inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing $ inserted.
 <inserted text> 
                 $
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -810,12 +838,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '-75,-25,25,75'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '-75,-25,25,75'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '-75,-25,25,75' could not be parsed as a number following the format
@@ -824,20 +852,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -846,12 +874,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(30,5,5,40)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(30,5,5,40)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(30,5,5,40)' could not be parsed as a number following the format
@@ -860,20 +888,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -882,12 +910,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(35,90,50)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(35,90,50)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(35,90,50)' could not be parsed as a number following the format
@@ -896,20 +924,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -918,12 +946,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -932,20 +960,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -954,12 +982,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -968,20 +996,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -990,12 +1018,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -1004,20 +1032,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1025,10 +1053,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing $ inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing $ inserted.
 <inserted text> 
                 $
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1037,12 +1065,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '-75,-25,25,75'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '-75,-25,25,75'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '-75,-25,25,75' could not be parsed as a number following the format
@@ -1051,20 +1079,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1073,12 +1101,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(30,5,5,40)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(30,5,5,40)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(30,5,5,40)' could not be parsed as a number following the format
@@ -1087,20 +1115,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1109,12 +1137,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(35,90,50)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(35,90,50)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(35,90,50)' could not be parsed as a number following the format
@@ -1123,20 +1151,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1145,12 +1173,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -1159,20 +1187,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1181,12 +1209,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -1195,20 +1223,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1217,12 +1245,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -1231,20 +1259,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1252,10 +1280,10 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing $ inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing $ inserted.
 <inserted text> 
                 $
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1264,12 +1292,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '-75,-25,25,75'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '-75,-25,25,75'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '-75,-25,25,75' could not be parsed as a number following the format
@@ -1278,20 +1306,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1300,12 +1328,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(30,5,5,40)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(30,5,5,40)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(30,5,5,40)' could not be parsed as a number following the format
@@ -1314,20 +1342,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1336,12 +1364,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(35,90,50)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(35,90,50)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(35,90,50)' could not be parsed as a number following the format
@@ -1350,20 +1378,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1372,12 +1400,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number '(15,30,25)'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number '(15,30,25)'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input '(15,30,25)' could not be parsed as a number following the format
@@ -1386,20 +1414,20 @@ defined in module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1408,12 +1436,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -1422,20 +1450,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1444,12 +1472,12 @@ really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Package siunitx Error: Invalid number 'd'.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Package siunitx Error: Invalid number 'd'.
 
 For immediate help type H <return>.
  ...                                              
                                                   
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 
 The input 'd' could not be parsed as a number following the format defined in
@@ -1458,20 +1486,20 @@ module documentation.
 
 Runaway argument?
 \q_stop \hbox_set:Nn \l__siunitx_table_tmp_box {\l__siunitx_table_after_model_tl \ETC.
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Forbidden control sequence found while scanning use of \__siunitx_table_print_format_auxi:w.
 <inserted text> 
                 \par 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I suspect you have forgotten a `}', causing me
 to read past where you wanted me to stop.
 I'll try to recover; but if the error is serious,
 you'd better type `E' or `X' now and fix your file.
 
-c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:351: Missing \endgroup inserted.
+c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex:402: Missing \endgroup inserted.
 <inserted text> 
                 \endgroup 
-l.351   \end{tabularx}
+l.402   \end{tabularx}
                       
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -1479,7 +1507,7 @@ With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
 
-[5 <./rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png> <./rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png> <./rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png>] [6] (rapport_de_stage.aux)
+[6 <./rapport_image_divers/p_qubit_overlap_map_left_33x33_20250822-064424.png> <./rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png> <./rapport_image_divers/singlet-triplet_du_57_dt_1_2_version1.png>] [7] (rapport_de_stage.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
@@ -1490,17 +1518,17 @@ LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 10324 strings out of 474486
- 226684 string characters out of 5743755
+ 10341 strings out of 474486
+ 228746 string characters out of 5743755
  1947542 words of memory out of 5000000
- 32516 multiletter control sequences out of 15000+600000
+ 32531 multiletter control sequences out of 15000+600000
  567882 words of font info for 74 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  79i,15n,93p,433b,808s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\lrnbe\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm0700.pk><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx8.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt9.pfb><C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on rapport_de_stage.pdf (6 pages, 945368 bytes).
+Output written on rapport_de_stage.pdf (7 pages, 1094343 bytes).
 PDF statistics:
- 143 PDF objects out of 1000 (max. 8388607)
+ 152 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 41 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 51 words of extra memory for PDF output out of 10000 (max. 10000000)
 

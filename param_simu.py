@@ -3,35 +3,9 @@ import numpy as np
 import scipy.constants as sc
 from scipy.constants import hbar, e
 from qutip_utils import all_occupations, _st_states_for_pair, _build_logical_qubits, _ud_states_for_pair_from_st
-
-
 import numpy as np
 
 
-# =============================== Matériau / système ===============================
-num_sites   = 4
-n_electrons = 4
-m_eff = 0.067 * sc.m_e
-
-# Positions des puits (4 dots)
-dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
-
-# ============================ Potentiel 1D (x) par défaut =========================
-a_meV_nm2 = 6.5e-3
-well_depths_meV     = (30, 5, 20, 40)
-barrier_heights_meV = (35, 80, 60)
-well_width_nm       = 23
-barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
-
-# asym_well_depths = 10
-# asym_barrier_width = 10
-# asym_barrier_height = 15
-
-# a_meV_nm2 = 6.5e-3
-# well_depths_meV     = (30, 5, 20, 40)
-# barrier_heights_meV = (35, 80, 60)
-# well_width_nm       = 23
-# barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
 # ========================= Grille adaptative en x (comme avant) ===================
 def build_adaptive_x_grid(dot_x, sigma_x_m, well_width_nm, barrier_widths_nm,
                           safety_pts=14, span_sigma=5):
@@ -43,48 +17,6 @@ def build_adaptive_x_grid(dot_x, sigma_x_m, well_width_nm, barrier_widths_nm,
         Nx += 1
     return np.linspace(dot_x.min()-span_sigma*sigma_x_m,
                        dot_x.max()+span_sigma*sigma_x_m, Nx)
-
-    x = np.linspace(dot_x.min()-span_sigma*sigma_x_m,
-                    dot_x.max()+span_sigma*sigma_x_m, Nx)
-    return x
-
-
-num_sites   = 4
-n_electrons = 4
-
-# =============================================================================
-# ===============================  DEFAULTS  ==================================
-# =============================================================================
-m_eff = 0.067 * sc.m_e
-sigma_y = 10e-9
-dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
-
-asym_well_depths = 10
-asym_barrier_width = 10
-asym_barrier_height = 15
-# Global conf for potentials
-# a_meV_nm2 = 6.5e-3
-# well_depths_meV = (30, 5, 5, 40)
-# barrier_heights_meV = (35, 90, 50)
-# well_width_nm = 23
-# barrier_widths_nm = (15, 30, 25)
-
-
-# a_meV_nm2 = 6.5e-3
-# well_depths_meV = (30, 5, 5, 35)
-# barrier_heights_meV = (35, 90, 35)
-# well_width_nm = 23
-# barrier_widths_nm = (15, 30, 15)
-
-# géo heatmap :
-sigma_x = 15e-9
-x = build_adaptive_x_grid(dot_x, sigma_x, well_width_nm, barrier_widths_nm,
-                          safety_pts=16, span_sigma=5)
-
-# ========================= Confinement & grille en x (NOUVEAU) ====================
-# --- Auto-sigma_x depuis la courbure locale du potentiel ---
-import numpy as np
-from scipy.constants import hbar, e
 
 # =========================== Confinement & grille en y (NOUVEAU) ==================
 def omega_y_from_meVnm2(a_meV_nm2, m_eff):
@@ -121,13 +53,39 @@ def build_adaptive_y_grid(sigma_y_m, safety_pts=16, span_sigma=5.0):
         Ny += 1
     return np.linspace(-span_sigma*sigma_y_m, +span_sigma*sigma_y_m, Ny)
 
+
+# =============================== Matériau / système ===============================
+num_sites   = 4
+n_electrons = 4
+m_eff = 0.067 * sc.m_e
+
+dot_x = np.array([-75e-9, -25e-9, 25e-9, 75e-9])
+
+sigma_y = 10e-9
+sigma_x = 15e-9
+
+# ============================ Potentiel 1D (x) par défaut =========================
+a_meV_nm2 = 6.5e-3
+well_depths_meV     = (30, 5, 20, 40)
+barrier_heights_meV = (35, 80, 60)
+well_width_nm       = 23
+barrier_widths_nm   = (15, 40, 30)  # (15, 30, 15 + asym_barrier_width) auparavant
+
+# Global conf for potentials
+# a_meV_nm2 = 6.5e-3
+# well_depths_meV = (30, 5, 5, 40)
+# barrier_heights_meV = (35, 90, 50)
+# well_width_nm = 23
+# barrier_widths_nm = (15, 30, 25)
+
 # Paramètres de confinement en y
 y_harmo_meV_nm2 = 100e-3          # mets 0 pour pas de confinement harmonique
 _sigma_y_nominal = 15e-9        # fallback si y_harmo = 0
 _sigma_from_conf = sigma_y_from_meVnm2(y_harmo_meV_nm2, m_eff)
 sigma_y_eff = _sigma_from_conf if (_sigma_from_conf is not None) else _sigma_y_nominal
 
-# Grille y (nouvelle logique adaptative)
+x = build_adaptive_x_grid(dot_x, sigma_x, well_width_nm, barrier_widths_nm,
+                          safety_pts=16, span_sigma=5)
 y = build_adaptive_y_grid(sigma_y_eff, safety_pts=16, span_sigma=5.0)
 
 print("here is y grid dimension : ",len(y), y[0]*1e9, y[-1]*1e9, sigma_y_eff*1e9)
@@ -139,8 +97,6 @@ t_imp   = 0.1e-9
 Delta_t = 1.6e-9
 T_final = 2.0e-9
 delta_U_meV = 57
-
-
 
 N_time    = 300
 
@@ -159,10 +115,8 @@ ud_R = _ud_states_for_pair_from_st(st_R)
 LOGICAL_BASIS = "st"  # ou "st" ud
 psi0_label = "singlet-singlet"
 
-
 psi0 = [st_L["S"].unit(),   -st_R["S"].unit()]   # |S>, |T0>
 #psi0 = [ud_L["ud"].unit(), ud_R["du"].unit()]
-
 
 if LOGICAL_BASIS == "ud":
     logical_qubits = {

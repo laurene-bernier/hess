@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1755879680.35065 "c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex" "rapport_de_stage.pdf" "rapport_de_stage" 1755879684.20727 2
+["pdflatex"] 1755885612.92527 "c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex" "rapport_de_stage.pdf" "rapport_de_stage" 1755885617.33953 2
   "C:/Users/lrnbe/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1755877987.538 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/lrnbe/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/tcrm0700.pk" 1755867598.41186 8268 792f18b6bae7fe506a350b23e937b822 ""
   "C:/Users/lrnbe/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1755863916.52565 24225046 41e4d22536600fe90ab63cbfd7a950bc ""
@@ -99,10 +99,12 @@
   "C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/tex/latex/tools/tabularx.sty" 1700599895 7147 d45559f8a31b8c53ada0640516660003 ""
   "C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/tex/latex/translations/dicts/translations-basic-dictionary-english.trsl" 1644048522 5588 0c1628daf15f4411ff1f463114c634a3 ""
   "C:/Users/lrnbe/AppData/Local/Programs/MiKTeX/tex/latex/translations/translations.sty" 1644048522 44247 2188b95d0ee74e31eca4d316263c58a7 ""
-  "c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex" 1755879672.82082 15114 e548d0fe31b8065131fc9c1e8e40466f ""
-  "qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png" 1755745833.66445 75843 e2cc2e3e8414048faa20ff0e335b80a3 ""
-  "qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png" 1755743022.15279 77415 ffd4778e959456b9c7f2dff79ed2d0f7 ""
-  "rapport_de_stage.aux" 1755879683.6055 3399 f19e567accd88436fea0be68ce1e3510 "pdflatex"
+  "c:/STAGE/Qutip_scripts/Qutip_scripts/simu_colab/simu_colab/rapport_de_stage.tex" 1755885596.71892 16972 0897feb2766013062f5110b9eea50d7c ""
+  "detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png" 1755884772.15197 80021 15736e8cddbaaa156cb44ca56e19041b ""
+  "qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png" 1755884865.70948 75843 e2cc2e3e8414048faa20ff0e335b80a3 ""
+  "qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png" 1755884865.77277 77415 ffd4778e959456b9c7f2dff79ed2d0f7 ""
+  "qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png" 1755884868.51626 77753 5fa47a31507fe2ccd9e86683a8abcee6 ""
+  "rapport_de_stage.aux" 1755885616.75074 4619 12f704a68716357bab91ae6cf14d1243 "pdflatex"
   "rapport_image_divers/hors_impulsion_bon.png" 1755865457.89327 92245 b0376660df8fe4d4960c53d2797ca871 ""
   "rapport_image_divers/p_detector_overlap_map_33x33_20250822-003725_faible.png" 1755815845.30958 86850 1957d5a304cf549240e12ee487dfec04 ""
   "rapport_image_divers/p_detector_overlap_map_33x33_bon_singlet-triplet.png" 1755878427.73935 89385 44fb5ab16f16609e2a393bf486f83223 ""

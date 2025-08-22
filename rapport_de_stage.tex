@@ -55,22 +55,6 @@
 
 %------------------------------------------------------CONSTRUCTION HEATMAPS------------------------------------------------------------
 
-\section*{Construction des heatmaps :}
-\begin{figure}[H]
-  \centering
-  \begin{minipage}[c]{0.6\textwidth}
-    \centering
-    \includegraphics[width=0.5\textwidth]{qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png}
-    \caption{Carte de fidélité de la phase du qubit.}
-    \label{fig:fidelity_map_1}
-  \end{minipage}\hfill
-  \begin{minipage}[c]{0.6\textwidth}
-    \centering
-    \includegraphics[width=0.5\textwidth]{qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png}
-    \caption{Carte de fidélité de la phase du qubit.}
-    \label{fig:fidelity_map_detector}
-  \end{minipage}
-\end{figure}
 
 % === Dans le corps du document ===
 \subsection*{Construction de la heatmap (récapitulatif mathématique)}
@@ -140,7 +124,24 @@ La \textbf{baseline} (référence) est la phase à $\Delta U=0$ pour chaque $\De
 \phi_0(\Delta t)=\phi(\Delta U{=}0,\Delta t).
 \]
 
-\subsection*{7. Deux cartes possibles}
+\subsection*{7. Deux heatmaps testées}
+
+\section*{Construction des heatmaps :}
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[c]{0.6\textwidth}
+    \centering
+    \includegraphics[width=0.5\textwidth]{qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_nochange_map_qubit_left_singlet-triplet_15x15_20250821-041033.png}
+    \caption{Carte de fidélité de la phase du qubit.}
+    \label{fig:fidelity_map_1}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.6\textwidth}
+    \centering
+    \includegraphics[width=0.5\textwidth]{qubit_results/singlet-triplet__p_si0_15_15/images/15x15__singlet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250821-032340.png}
+    \caption{Carte de fidélité de la phase du qubit.}
+    \label{fig:fidelity_map_detector}
+  \end{minipage}
+\end{figure}
 \paragraph{(a) Carte “fidelity de phase” (utilisée dans ton code).}
 On mesure la non–modification de phase par
 \[
@@ -223,7 +224,7 @@ On trace $p$ (ou $p_{\text{ov}}$) par interpolation bilinéaire minimale (ou spl
 \end{table}
 
 
-\subsection{Heatmap des variations de phase du qubit et du détecteur}
+\subsection{Heatmap des variations de phase du qubit et du détecteur/ 1er essai en 15x15 :}
 
 \subsubsection{Singlet-Triplet :}
 
@@ -244,8 +245,58 @@ On trace $p$ (ou $p_{\text{ov}}$) par interpolation bilinéaire minimale (ou spl
 \end{figure}
 
 \subsubsection{Triplet-Singlet :}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{p_detector_overlap_map_33x33_20250822-003725_faible.png}
+    \caption{Carte de fidélité (détecteur A)}
+    \label{fig:fidelity_map_a}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{p_detector_overlap_map_33x33_20250822-003725_faible.png}
+    \caption{Carte de fidélité (détecteur B)}
+    \label{fig:fidelity_map_b}
+  \end{minipage}
+\end{figure}
+
+\subsubsection{Triplet-Triplet :}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{qubit_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__qubit/p_qubit_overlap_map_left_15x15_20250822-181026.png}
+    \caption{Carte de fidélité (détecteur A)}
+    \label{fig:fidelity_map_a}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{detector_results/triplet-triplet__psi0_15x15/images/15x15__triplet-triplet__detector/p_detector_overlap_map_15x15_20250822-184347.png}
+    \caption{Carte de fidélité (détecteur B)}
+    \label{fig:fidelity_map_b}
+  \end{minipage}
+\end{figure}
+
 \subsubsection{Singlet-Singlet :}
-\subsubsection{Singlet-Singlet :}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{p_detector_overlap_map_33x33_20250822-003725_faible.png}
+    \caption{Carte de fidélité (détecteur A)}
+    \label{fig:fidelity_map_a}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{p_detector_overlap_map_33x33_20250822-003725_faible.png}
+    \caption{Carte de fidélité (détecteur B)}
+    \label{fig:fidelity_map_b}
+  \end{minipage}
+\end{figure}
 
 
 %------------------------------------------------------ESSAI 2 ------------------------------------------------------------
